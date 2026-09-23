@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f3ec" />
+    <meta name="description" content="An interactive classroom investigation into water moving through soil and rock." />
+    <title>Fieldnotes — Water through soil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#explore" aria-label="Fieldnotes home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40"><path d="M20 4c5 7 11 12 11 20a11 11 0 1 1-22 0C9 16 15 11 20 4Z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M14 25c1 3 3 4 6 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </span>
+          <span class="brand-copy"><strong>fieldnotes</strong><small>classroom lab</small></span>
+        </a>
+
+        <div class="nav-label">YOUR WORKSPACE</div>
+        <nav class="primary-nav">
+          <button class="nav-item active" data-view="intro"><span class="nav-icon">⌂</span><span>Start here</span><span class="nav-chevron">›</span></button>
+          <button class="nav-item" data-view="explore"><span class="nav-icon">◉</span><span>Investigate</span></button>
+          <button class="nav-item" data-view="lesson"><span class="nav-icon">▤</span><span>Lesson &amp; check-in</span></button>
+          <button class="nav-item" data-view="teacher"><span class="nav-icon">▦</span><span>Teacher desk</span></button>
+          <button class="nav-item" data-view="sources"><span class="nav-icon">⌁</span><span>Material library</span></button>
+        </nav>
+
+        <section class="mission-card workflow-card workspace-guide" aria-labelledby="workflow-title">
+          <div class="mission-top"><span class="mission-icon" aria-hidden="true">☑</span></div>
+          <h3 id="workflow-title">Investigation Guide</h3>
+          <div class="workflow-progress"><span id="workflow-progress-label">0 of 4 steps</span><span class="workflow-track"><i id="workflow-progress-fill"></i></span></div>
+          <ol id="workflow-list" class="workflow-list" aria-live="polite"></ol>
+          <button class="text-link" data-view="lesson">Open all question prompts <span>↗</span></button>
+        </section>
+
+        <div class="sidebar-bottom">
+          <div class="class-mini">
+            <div class="class-mini-top"><span class="live-dot"></span><span>ACTIVE CLASS</span></div>
+            <strong id="sidebar-class-name">Water &amp; the land</strong>
+            <div class="class-mini-foot"><span id="sidebar-class-code" class="mini-code" aria-label="Class code RIVER7">RIVER7</span></div>
+          </div>
+          <button class="nav-item join-shortcut" data-view="join"><span class="nav-icon">＋</span><span>Join a class</span></button>
+          <div class="sidebar-note"><span class="note-dot"></span>Saved in this browser</div>
+        </div>
+      </aside>
+
+      <div class="main-column">
+        <header class="topbar">
+          <div class="crumb"><span>Fieldnotes</span><span class="crumb-slash">/</span><strong id="topbar-class-name">Water &amp; the land</strong></div>
+          <div class="topbar-actions">
+            <span id="header-view-identity" class="view-identity">Teacher View</span>
+            <span class="header-class-code"><span>CLASS</span><strong id="header-class-code">RIVER7</strong></span>
+            <button class="header-join-button" type="button" data-view="join">Join a class</button>
+            <a id="header-student-url" class="header-student-url" href="?mode=join" target="_blank" rel="noopener noreferrer" aria-label="Open the student website link"><span id="header-student-url-text">Student link</span></a>
+            <button id="header-qr-code" class="header-qr-button" type="button" aria-label="Show student link QR code">QR</button>
+            <button id="return-teacher-view" class="return-teacher-view" type="button" hidden>Return to Teacher View</button>
+          </div>
+        </header>
+
+        <main id="main-content">
+          <section id="view-intro" class="view active-view" aria-labelledby="welcome-title">
+            <div class="page-heading">
+              <div><div class="eyebrow"><span class="eyebrow-mark">OPTIONAL START · ABOUT 2 MINUTES</span></div><h1 id="welcome-title">Start with the spaces.</h1><p class="page-intro">A short, visual introduction to the soil investigation. You can skip it now and return any time.</p></div>
+            </div>
+            <div class="welcome-layout">
+              <section class="welcome-main">
+                <div class="welcome-challenge"><span class="welcome-art" aria-hidden="true">⌁</span><div><div class="section-kicker">THE PROBLEM</div><h2>Where could a school rain garden work well?</h2><p>Use evidence about soil and water to help compare three fictional Perth-area sites. This sandbox gives you one piece of evidence; it is not a real site test.</p></div></div>
+                <div class="intro-concepts" role="group" aria-label="Explore three ideas">
+                  <button type="button" class="intro-concept is-active" data-intro-step="spaces" aria-pressed="true"><span>01</span><strong>Open space</strong></button>
+                  <button type="button" class="intro-concept" data-intro-step="pathways" aria-pressed="false"><span>02</span><strong>Water pathways</strong></button>
+                  <button type="button" class="intro-concept" data-intro-step="fair" aria-pressed="false"><span>03</span><strong>A fair comparison</strong></button>
+                </div>
+                <div class="intro-visual-row"><div class="intro-diagram" id="intro-diagram" aria-label="Illustration of pore spaces between soil particles"></div><div class="intro-explanation" aria-live="polite"><span class="section-kicker" id="intro-step-label">IDEA 1 · POROSITY</span><h2 id="intro-step-title">Spaces between particles</h2><p id="intro-step-copy">Porosity means how much open space a material has. Imagine the gaps between grains as tiny rooms.</p><button class="term-link" type="button" data-glossary="porosity" data-tooltip="Porosity is the amount of open space inside a material. Example: a sponge can have many spaces to hold water.">Porosity · simple meaning + example</button></div></div>
+                <div class="intro-actions"><button id="skip-intro" class="quiet-button">Skip introduction</button><button id="start-investigation" class="run-button">Go to the investigation <span>→</span></button></div>
+              </section>
+              <aside class="welcome-aside"><div class="section-kicker">YOUR ROUTE</div><ol class="welcome-route"><li><span>1</span><div><strong>Predict</strong><small>What do you think will happen?</small></div></li><li><span>2</span><div><strong>Test</strong><small>Change the material; keep the setup fair.</small></div></li><li><span>3</span><div><strong>Explain</strong><small>Use the picture and graph as evidence.</small></div></li><li><span>4</span><div><strong>Apply</strong><small>Connect your evidence to the rain-garden choice.</small></div></li></ol><p class="welcome-note">Need a hand with a science word? Select an underlined term for a short meaning and example.</p></aside>
+            </div>
+          </section>
+
+          <section id="view-explore" class="view active-view" aria-labelledby="page-title">
+            <div class="page-heading">
+              <div>
+                <div class="eyebrow"><span class="eyebrow-mark">FIELD STUDY 02</span><span class="eyebrow-dot">·</span><span>SOIL &amp; WATER</span></div>
+                <h1 id="page-title">Where does the water go?</h1>
+                <p class="page-intro">Test how different substances let water move through them. Keep the setup the same, change one variable, and look for a pattern.</p>
+              </div>
+              <div class="progress-chip"><span class="progress-ring">01</span><span><small>YOUR INVESTIGATION</small><strong>Explore the flow</strong></span></div>
+            </div>
+
+            <div class="mode-row">
+              <div class="mode-label"><span class="mode-sparkle">✳</span><span><strong>Choose your view</strong><small>Every material is available in both modes.</small></span></div>
+              <div class="mode-switch" role="group" aria-label="Simulator detail mode">
+                <button id="simple-mode" class="mode-option selected" aria-pressed="true">Simple <span>Start here</span></button>
+                <button id="advanced-mode" class="mode-option" aria-pressed="false">Advanced <span>Show the science</span></button>
+              </div>
+            </div>
+
+            <div class="lab-layout">
+              <aside class="control-column">
+                <section class="control-card" aria-labelledby="setup-title">
+                  <div class="card-title-row">
+                    <div><div class="section-kicker">YOUR SETUP</div><h2 id="setup-title">Set up a trial</h2></div>
+                    <span class="step-count">01 / 03</span>
+                  </div>
+                  <div class="field-label" id="material-select-label">Material <span class="field-required">10 available</span></div><button id="material-help" class="term-link material-help" type="button" data-glossary="material-clay" data-tooltip="Clay is soil with extremely small mineral particles. Example: it can have many tiny spaces that still slow water." aria-label="Explain the selected material">What is this material?</button>
+                  <div class="material-picker" id="material-picker"><button id="material-picker-trigger" class="material-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="material-select-label material-picker-current" aria-describedby="material-note"><span id="material-picker-current"></span><span class="select-chevron" aria-hidden="true">⌄</span></button><div id="material-picker-menu" class="material-picker-menu" role="listbox" aria-labelledby="material-select-label" hidden></div></div><select id="material-select" aria-hidden="true" tabindex="-1" hidden></select>
+                  <div id="material-note" class="material-note">A material’s pore space and flow rate are related, but they are not the same thing.</div>
+
+                  <div class="range-field">
+                    <div class="range-heading"><label for="head-range">Water head <button class="term-inline" type="button" aria-label="Explain water head" data-glossary="water-head" data-tooltip="Water head is the height of water pushing through the sample. Example: a higher water level gives a stronger push.">?</button></label><output id="head-output" for="head-range">15 cm</output></div>
+                    <input id="head-range" type="range" min="5" max="30" value="15" step="1" />
+                    <div class="range-ends"><span>Lower</span><span>Higher pressure</span></div>
+                  </div>
+                  <div class="range-field">
+                    <div class="range-heading"><label for="depth-range">Material depth</label><output id="depth-output" for="depth-range">10 cm</output></div>
+                    <input id="depth-range" type="range" min="5" max="20" value="10" step="1" />
+                    <div class="range-ends"><span>Shorter</span><span>Longer path</span></div>
+                  </div>
+                  <div class="range-field compact-range">
+                  <div class="range-heading"><label for="compact-range">Compaction <button class="term-inline" type="button" aria-label="Explain compaction" data-glossary="compaction" data-tooltip="Compaction is how tightly particles are pressed. Example: pressing loose grains together changes the gaps between them.">?</button></label><output id="compact-output" for="compact-range">0%</output></div>
+                    <input id="compact-range" type="range" min="0" max="60" value="0" step="5" />
+                    <div class="range-ends"><span>Loose</span><span>Pressed</span></div>
+                  </div>
+                  <div id="advanced-readout" class="advanced-readout" hidden>
+                    <div class="readout-head"><span>ILLUSTRATIVE MODEL VALUES</span><button id="formula-help" class="help-button" aria-label="Explain model values">?</button></div>
+                    <p class="model-value-note">These numbers are sandbox inputs, not measurements of a real sample.</p>
+                    <div class="value-pair"><span>Model input, K <button class="term-inline" type="button" aria-label="Explain hydraulic conductivity" data-glossary="hydraulic-conductivity" data-tooltip="Hydraulic conductivity (K) is a model number for how readily a material transmits water under these conditions.">?</button></span><strong id="k-value">—</strong></div>
+                    <div class="value-pair"><span>Porosity <button class="term-inline" type="button" aria-label="Explain porosity" data-glossary="porosity" data-tooltip="Porosity is the share of a material's volume made up of open spaces. Example: a sponge has spaces that can hold water.">?</button></span><strong id="porosity-value">—</strong></div>
+                    <div class="value-pair"><span>Area, A <button class="term-inline" type="button" aria-label="Explain sample area" data-glossary="sample-area" data-tooltip="Sample area is the face area water passes through. Example: a wider filter has more area for water to pass side by side.">?</button></span><strong id="area-value">—</strong></div>
+                    <div class="value-pair"><span>Head, Δh <button class="term-inline" type="button" aria-label="Explain head difference" data-glossary="head-difference" data-tooltip="The head difference is the height-related push across the sample. Example: water flows from a higher tank level toward a lower outlet.">?</button></span><strong id="head-value">—</strong></div>
+                    <div class="value-pair"><span>Depth, L <button class="term-inline" type="button" aria-label="Explain sample length" data-glossary="sample-length" data-tooltip="Sample length is the distance water travels through the material. Example: water takes a longer route through a deep layer than a thin one.">?</button></span><strong id="length-value">—</strong></div>
+                    <div class="value-pair"><span>Discharge, Q <button class="term-inline" type="button" aria-label="Explain discharge" data-glossary="discharge" data-tooltip="Discharge is the volume of water passing through each second. Example: a tap filling a bucket quickly has a greater discharge.">?</button></span><strong id="q-value">—</strong></div>
+                    <div class="value-pair"><span>Darcy flux, q/A <button class="term-inline" type="button" aria-label="Explain Darcy flux" data-glossary="darcy-flux" data-tooltip="Darcy flux is flow rate divided by the whole sample area. It is not the exact speed of water in each pore. Example: a sprinkler spreading the same water over a wider patch has a lower flow per square metre.">?</button></span><strong id="v-value">—</strong></div>
+                    <div class="equation"><span>Darcy’s law <button class="term-inline" type="button" aria-label="Explain Darcy's law" data-glossary="darcy-law" data-tooltip="Darcy's law estimates flow through a porous material from its conductivity, area and water-level gradient. Example: it helps explain why water passes faster through a wide, open filter than a narrow, tightly packed one.">?</button></span><strong id="equation-value">Q = K × A × (Δh ÷ L)</strong></div>
+                  </div>
+                  <div class="control-divider"></div>
+                  <div class="compare-heading"><div><div class="section-kicker">COMPARE</div><h3>Test up to 3</h3></div><span class="compare-glyph">⇄</span></div>
+                  <div class="compare-add-row">
+                    <div class="material-picker compare-picker small-select" id="compare-picker"><button id="compare-picker-trigger" class="material-picker-trigger" type="button" aria-label="Choose a material to compare" aria-haspopup="listbox" aria-expanded="false"><span id="compare-picker-current">Choose another material</span><span class="select-chevron" aria-hidden="true">⌄</span></button><div id="compare-picker-menu" class="material-picker-menu" role="listbox" aria-label="Materials available to compare" hidden></div><select id="compare-select" aria-hidden="true" tabindex="-1" hidden><option value="">Choose another material</option></select></div>
+                    <button id="add-compare" class="icon-add" aria-label="Add material to comparison" title="Add comparison">+</button>
+                  </div>
+                  <div id="compare-chips" class="compare-chips" aria-live="polite"></div>
+                  <div class="control-footnote"><span class="tiny-info">i</span><span>For a fair test, each material gets the same water head, depth and compaction.</span></div>
+                </section>
+
+              </aside>
+
+              <section class="experiment-card" aria-label="Live soil investigation">
+                <div class="experiment-toolbar">
+                  <div class="experiment-title"><span class="activity-dot"></span><span><strong>Permeability lab</strong><small id="activity-status">Ready for a new trial</small></span></div>
+                  <div class="run-actions">
+                    <button id="reset-trial" class="quiet-button" title="Save this completed trial to Activity History, then reset">Reset</button>
+                    <button id="run-trial" class="run-button"><span class="play-mark">▶</span><span>Start trial</span></button>
+                  </div>
+                </div>
+                <div class="visual-pair">
+                  <section class="activity-panel" aria-labelledby="activity-title">
+                    <div class="panel-topline"><div><div class="panel-overline">THE ACTIVITY</div><h3 id="activity-title">Watch the water move</h3></div><button class="caption-help" id="why-slow" title="About the simulation">i</button></div>
+                    <div class="activity-stage" id="activity-stage">
+                      <div class="stage-tag">SIMULATED SOIL SAMPLE</div>
+                      <div id="activity-visual" class="activity-visual" aria-label="Diagram of water passing through a soil sample"></div>
+                      <div class="stage-caption"><span class="material-swatch" id="material-swatch"></span><span id="visual-material-label">Clay sample</span><span class="caption-separator">·</span><span id="visual-flow-label">Very slow flow</span></div>
+                      <div class="flow-callout"><span class="callout-wave">≈</span><span><strong id="flow-band">Slow flow</strong><small>Water movement through this sample</small></span></div>
+                    </div>
+                    <div class="activity-readings">
+                      <div><span class="reading-label">COLLECTED</span><strong id="volume-value">0.00 <small>mL</small></strong></div>
+                      <div><span class="reading-label">ELAPSED</span><strong id="time-value">0:00</strong></div>
+                      <div class="reading-state"><span class="reading-label">PORE SPACE</span><strong id="porosity-band">High</strong></div>
+                    </div>
+                    <div class="simulator-seek">
+                      <div class="simulator-seek-head"><label for="trial-scrubber">Explore trial time</label><output id="trial-time-output" for="trial-scrubber">0:00</output></div>
+                      <input id="trial-scrubber" type="range" min="0" max="120" step="1" value="0" aria-label="Move through the simulated trial time" />
+                      <div class="simulator-seek-foot"><span>0 sec</span><span id="trial-time-end">120 sec</span><span>Move the slider to see how the samples and graph change.</span><button type="button" id="advance-trial" class="advance-button">+10 sec</button></div>
+                    </div>
+                    <details class="pore-explorer"><summary>See how pore size and pathways differ</summary><p class="pore-explorer-note">Adjust the sketch to explore how grain size and connected gaps can change flow. These sliders teach the idea; they do not change the selected material or graph.</p><div id="pore-model-visual" class="pore-model-visual"></div><label class="range-heading" for="grain-model-range"><span>Grain size</span><output id="grain-model-output">Mixed</output></label><input id="grain-model-range" type="range" min="0" max="100" value="50" /><div class="range-ends"><span>Fine</span><span>Coarse</span></div><label class="range-heading pore-slider-label" for="path-model-range"><span>Connected gaps</span><output id="path-model-output">Some</output></label><input id="path-model-range" type="range" min="0" max="100" value="50" /><div class="range-ends"><span>Few links</span><span>More links</span></div><p id="pore-model-caption" class="pore-model-caption" aria-live="polite"></p></details>
+                    <details class="activity-history-details"><summary><span>Activity History</span><span id="history-count" class="history-count">0 saved trials</span></summary><p class="history-intro">Earlier trials appear newest first. Compare a saved material line with today’s graph to look for patterns.</p><div id="activity-history-list" class="activity-history-list"></div></details>
+                  </section>
+
+                  <section class="graph-panel" aria-labelledby="graph-title">
+                    <div class="panel-topline graph-heading"><div><div class="panel-overline">YOUR EVIDENCE</div><h3 id="graph-title">Water collected over time</h3></div><span id="graph-live" class="graph-live"><i></i> LIVE</span></div>
+                    <div class="chart-wrap">
+                      <svg id="volume-chart" viewBox="0 0 520 260" role="img" aria-label="Line graph showing cumulative water collected over time"></svg>
+                    </div>
+                    <div id="chart-legend" class="chart-legend"></div>
+                    <p id="graph-scale-note" class="graph-scale-note" hidden></p>
+                    <div class="graph-explainer">
+                      <div class="explainer-icon">↗</div>
+                      <div><strong>What the graph means</strong><p>Horizontal axis: elapsed time. Vertical axis: cumulative water collected.</p><p id="graph-line-reading">At the same time, a higher line means more water has collected. A steeper line means a faster flow rate.</p><p>Dashed line: model estimate. Solid line: result of this model run. Both are simulated, not field measurements.</p><p>A flat line means little water passed through in this test. It does not mean the material has no pores.</p><button class="term-link graph-term" type="button" data-glossary="slope" data-tooltip="Graph slope means how quickly the line rises. Example: a steeper line shows more water collected in the same time.">What does slope mean?</button></div>
+                    </div>
+                    <div id="graph-insight" class="graph-insight"><span class="insight-stars">✳</span><span>Start a trial to see how your setup changes the line.</span></div>
+                    <section id="selected-material-model" class="selected-material-model" aria-labelledby="selected-model-title"><div class="selected-model-heading"><div><div class="panel-overline">SELECTED MATERIAL</div><h4 id="selected-model-title">Porosity &amp; permeability</h4></div><span id="model-material-name" class="selected-model-name">Clay</span></div><div class="selected-model-body"><div id="selected-material-visual" class="selected-material-visual"></div><div class="selected-model-properties"><div class="model-property"><div class="model-property-heading"><span>Porosity <button class="term-inline" type="button" aria-label="Explain porosity" data-glossary="porosity" data-tooltip="Porosity is the share of a material's volume made up of open spaces. Example: a sponge has spaces that can hold water.">?</button></span><strong id="model-porosity-label">—</strong></div><div id="model-porosity-meter" class="model-meter" role="meter" aria-label="Modelled porosity" aria-valuemin="0" aria-valuemax="60" aria-valuenow="0"><i></i></div><div class="model-meter-ends"><span>Less open space</span><span>More</span></div></div><div class="model-property"><div class="model-property-heading"><span>Permeability <button class="term-inline" type="button" aria-label="Explain permeability" data-glossary="permeability" data-tooltip="Permeability describes how easily water moves through connected spaces. Example: an open path drains faster than a narrow, blocked one.">?</button></span><strong id="model-permeability-label">—</strong></div><div id="model-permeability-meter" class="model-meter permeability-meter" role="meter" aria-label="Illustrative model permeability on a low to high scale" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><div class="model-meter-ends"><span>Lower</span><span>Higher</span></div></div></div></div><p id="selected-model-note" class="selected-model-note"></p><p class="model-disclaimer">Illustrative model: natural samples vary. This picture is not a photograph or field measurement.</p></section>
+                  </section>
+                </div>
+                <div class="experiment-bottom-note"><span class="note-leaf">✿</span><span><strong>Think like a scientist:</strong> change one setting at a time so you can tell what caused the difference.</span><button id="what-is-darcy" class="underlined-button">Why does water flow? <span>↗</span></button></div>
+              </section>
+            </div>
+
+            <footer class="page-footer"><span>Fieldnotes <span class="footer-dot">·</span> <strong id="footer-class-name">Water &amp; the land</strong></span><small class="footer-credit">Made by Kyle Sprenkeling</small><button id="about-model" class="footer-link">About this model</button></footer>
+          </section>
+
+          <section id="view-lesson" class="view" aria-labelledby="lesson-title" hidden>
+            <div class="page-heading secondary-heading">
+              <div><div class="eyebrow"><span class="eyebrow-mark">FIELD STUDY 02</span><span class="eyebrow-dot">·</span><span>LEARN &amp; APPLY</span></div><h1 id="lesson-title">Water moves through soil</h1><p class="page-intro">Use the lab to gather evidence, then connect what you saw to the ideas behind it.</p></div>
+              <div class="progress-chip"><span class="progress-ring lesson-ring">02</span><span><small>LESSON PROGRESS</small><strong><span id="question-progress">0</span> of 6 answered</strong></span></div>
+            </div>
+            <div class="lesson-layout">
+              <div class="lesson-main">
+                <article class="lesson-card lesson-intro-card">
+                  <div class="lesson-card-head"><div><div class="section-kicker">THE BIG IDEA</div><h2>More pores doesn’t always mean faster flow.</h2></div><span class="idea-mark">✳</span></div>
+                  <p>Soil contains spaces between particles. Those spaces store water, but the size and connection of the spaces affect how quickly water can move. A clay can have lots of pore space and still let water through slowly because its pores are tiny and poorly connected.</p>
+                  <div class="idea-pair"><div class="idea-cell"><span class="idea-icon pore-icon">◌</span><span><strong>Porosity <button class="term-inline" type="button" data-glossary="porosity" data-tooltip="Porosity is how much open space a material has. Example: a sponge has many spaces that can hold water.">?</button></strong><small>How much open space is in the material.</small></span></div><span class="idea-not-equal">≠</span><div class="idea-cell"><span class="idea-icon flow-icon">↗</span><span><strong>Permeability <button class="term-inline" type="button" data-glossary="permeability" data-tooltip="Permeability is how easily water moves through connected spaces. Example: open gaps make a path for water.">?</button></strong><small>How easily connected spaces let water through.</small></span></div></div>
+                </article>
+                <div class="lesson-section-title"><div><div class="section-kicker">PREDICT · TEST · EXPLAIN</div><h2>Evidence check-in</h2></div><span class="question-count">6 SHORT PROMPTS · SAVED HERE</span></div>
+                <p class="form-note">Draft your thinking here, then use your class form for the assessed responses. Form Q7–Q9 match the three investigation questions.</p>
+                <div id="question-list" class="question-list"></div>
+                <div class="submit-bar"><div><strong>Save your check-in</strong><small>Your draft answers stay in this browser only.</small></div><button id="submit-lesson" class="run-button"><span>Finish check-in</span><span>→</span></button></div>
+                <div id="submit-message" class="submit-message" role="status" hidden></div>
+              </div>
+              <aside class="lesson-aside">
+                <section class="aside-card lesson-task-card"><div class="section-kicker">LEARNING INTENTION</div><h3 id="lesson-intention-title">What am I learning?</h3><p id="active-learning-intention">Compare how water moves through different materials and use the graph as evidence.</p><div class="learning-task-divider"></div><div class="section-kicker">INVESTIGATION TASK</div><h3 id="lesson-task-title">Where does the water go?</h3><p id="lesson-task-description">Choose three materials. Keep the setup the same and record what changes.</p><div class="task-progress"><div class="task-progress-track"><span id="task-progress-fill"></span></div><span id="task-progress-label">0 / 3 materials</span></div><button class="outline-button" data-view="explore">Return to the lab <span>↗</span></button></section>
+                <section class="aside-card reference-card"><span class="reference-icon">⌁</span><div class="section-kicker">KEEP IN MIND</div><p>Our model uses representative material values to make comparisons clear. Real soil properties vary with grain size, structure, moisture and local conditions.</p><button class="text-link" data-view="sources">Explore the material library <span>↗</span></button></section>
+              </aside>
+            </div>
+          </section>
+
+          <section id="view-teacher" class="view" aria-labelledby="teacher-title" hidden>
+            <div class="page-heading secondary-heading">
+              <div><div class="eyebrow"><span class="eyebrow-mark">TEACHER DESK</span><span class="eyebrow-dot">·</span><span>CLASSROOM OVERVIEW</span></div><h1 id="teacher-title">Your class, at a glance.</h1><p class="page-intro">A quick look at today’s investigation, learner progress and lesson materials.</p></div>
+              <button id="export-class" class="outline-button export-button"><span>⇩</span> Export class CSV</button>
+            </div>
+            <div class="preview-notice"><span class="notice-symbol">i</span><span><strong>Local classroom workspace</strong> — classes, rosters, answers and replays save in this browser. A shared live class across student devices will need connected storage when the site is published.</span></div>
+            <div class="teacher-stats">
+              <article class="stat-card"><span class="stat-icon green-stat">♧</span><span class="stat-caption">ACTIVE CLASS</span><strong id="active-class-label">Water &amp; the land</strong><small id="active-class-subtitle">Select or manage a class below</small></article>
+              <article class="stat-card"><span class="stat-icon ochre-stat">⌁</span><span class="stat-caption">JOIN CODE</span><strong id="join-code-display" class="join-code-large">RIVER7</strong><small>Share with your class</small></article>
+              <article class="stat-card"><span class="stat-icon coral-stat">◷</span><span class="stat-caption">LEARNERS JOINED</span><strong id="roster-count">4</strong><small><span class="live-dot"></span> Updated in this browser</small></article>
+              <article class="stat-card"><span class="stat-icon blue-stat">✓</span><span class="stat-caption">LESSON COMPLETION</span><strong id="completion-stat">50%</strong><small id="completion-caption">Learners submitted</small></article>
+            </div>
+            <section class="dashboard-card class-manager" aria-label="Manage classes">
+              <div class="class-manager-select"><label class="field-label" for="active-class-select">Active class</label><select id="active-class-select" class="text-input" aria-label="Select active class"></select></div>
+              <div class="class-manager-actions"><button id="new-class" type="button" class="outline-button">＋ Add class</button><button id="rename-class" type="button" class="outline-button">Rename</button><button id="delete-class" type="button" class="quiet-button">Delete class</button></div>
+              <div class="class-join-tools"><button id="randomize-code" type="button" class="outline-button" aria-label="Generate a new unique join code for the active class">↻ Generate new code</button><a id="student-join-link" class="student-join-anchor" href="?mode=join" target="_blank" rel="noreferrer"><span>Student version</span><code id="student-url-display">http://localhost/?mode=join</code><span aria-hidden="true">↗</span></a><button id="copy-student-link" type="button" class="outline-button">Copy link</button><button id="preview-student-view" type="button" class="outline-button">Preview as a student</button><span id="student-link-copy" class="student-link-copy" aria-live="polite"></span><small class="class-code-help">Codes stay with a class when you reopen it. Generate a new one only when you need to replace it.</small></div>
+            </section>
+            <div class="teacher-grid">
+              <section class="dashboard-card roster-card"><div class="dashboard-card-head"><div><div class="section-kicker">LEARNER ROSTER</div><h2 id="roster-class-title">Water &amp; the land</h2></div><span id="roster-class-code" class="class-code-pill">RIVER7</span></div><div class="table-scroll"><table class="roster-table"><thead><tr><th>LEARNER</th><th>PROGRESS</th><th>STATUS</th><th>SCORE</th></tr></thead><tbody id="roster-body"></tbody></table></div><details class="roster-editor"><summary>Add learners · one name per line or paste a list</summary><label class="field-label" for="bulk-students">Learner names</label><textarea id="bulk-students" class="text-area" rows="4" placeholder="John Smith&#10;Ava Martin&#10;Noah Williams"></textarea><div class="roster-editor-actions"><small>Names are matched without case sensitivity. A unique first name is accepted.</small><button id="add-students" type="button" class="small-primary">Add to roster</button></div></details><div class="card-footer"><span class="live-dot"></span><span id="class-status-caption">Saved in this browser</span><button id="close-class" class="footer-link">Close class</button></div></section>
+              <section class="dashboard-card lesson-builder"><div class="dashboard-card-head"><div><div class="section-kicker">LESSON AUTHORING</div><h2>Build a field study</h2></div><span class="builder-icon">✎</span></div><button id="teacher-tour-start" class="outline-button teacher-tour-start">Show me around</button><label class="field-label" for="lesson-name">Lesson title</label><input id="lesson-name" class="text-input" value="Where does the water go?" /><label class="field-label" for="lesson-intentions">Learning intention</label><textarea id="lesson-intentions" class="text-area" rows="2">Compare how water moves through different materials and use the graph as evidence.</textarea><label class="field-label" for="lesson-description">Investigation task</label><textarea id="lesson-description" class="text-area" rows="3">Choose three materials. Keep the setup the same and record what changes.</textarea><details class="teacher-editors"><summary>Edit student questions and steps</summary><label class="field-label" for="question-editor">Question wording <span class="field-required">one prompt per line</span></label><textarea id="question-editor" class="text-area editor-area" rows="6" aria-describedby="question-editor-help"></textarea><small id="question-editor-help">Edit the six default prompts in order. This changes the local preview.</small><label class="field-label" for="workflow-editor">Investigation step notes <span class="field-required">one note per line</span></label><textarea id="workflow-editor" class="text-area editor-area" rows="4" aria-describedby="workflow-editor-help"></textarea><small id="workflow-editor-help">Edit the guidance beside each of the four steps.</small><div class="editor-actions"><button id="restore-defaults" class="quiet-button" type="button">Restore default wording</button><button id="save-teacher-edits" class="small-primary" type="button">Save wording</button></div></details><div class="builder-footer"><span id="publish-status" class="draft-status">DRAFT · 6 PROMPTS</span><button id="publish-lesson" class="small-primary">Publish lesson</button></div></section>
+            </div>
+            <section class="dashboard-card replay-card"><div class="dashboard-card-head"><div><div class="section-kicker">SESSION REPLAY</div><h2>Revisit the investigation</h2></div><label class="replay-learner-label">Learner<select id="replay-learner-select" aria-label="Choose learner replay"></select></label></div><p>Replay reconstructs the simulator from saved actions and state changes. It does not record video.</p><div class="replay-controls"><button id="replay-play" class="replay-play" aria-label="Play replay">▶</button><input id="replay-scrubber" type="range" min="0" max="100" value="0" /><span id="replay-time">00:00</span><select id="replay-speed" aria-label="Replay speed"><option value="1">1×</option><option value="4">4×</option><option value="16">16×</option></select><label class="skip-idle"><input id="skip-idle" type="checkbox" checked /> Skip idle time</label></div><div id="replay-caption" class="replay-caption">Start a trial in the lab to create a local replay.</div><div id="replay-frame" class="replay-frame" aria-label="Reconstructed simulator state"></div></section>
+          </section>
+
+          <section id="view-sources" class="view" aria-labelledby="sources-title" hidden>
+            <div class="page-heading secondary-heading"><div><div class="eyebrow"><span class="eyebrow-mark">FIELD GUIDE</span><span class="eyebrow-dot">·</span><span>DATA &amp; SOURCES</span></div><h1 id="sources-title">Meet the materials.</h1><p class="page-intro">Representative classroom values help us compare materials. Natural materials are variable: these values are a model, not a test result for every sample.</p></div><span class="sources-stamp">SOURCE NOTES INCLUDED</span></div>
+            <div class="preview-notice source-notice"><span class="notice-symbol">✳</span><span><strong>Why compare categories?</strong> Grain size, sorting, weathering, fractures and soil structure change the way water moves. Use this model to explore patterns; its numbers are not field measurements.</span></div>
+            <div class="sources-layout"><div class="source-table-card"><div class="dashboard-card-head"><div><div class="section-kicker">MATERIAL LIBRARY</div><h2>Ten materials · one shared simulator</h2></div><span class="library-badge">Available in Simple &amp; Advanced</span></div><div class="table-scroll"><table class="materials-table"><thead><tr><th>MATERIAL</th><th>POROSITY BAND</th><th>MODELLED FLOW</th><th>CLASSROOM NOTE</th></tr></thead><tbody id="materials-body"></tbody></table></div><div class="data-note"><span class="tiny-info">i</span><span>Flow categories and porosity bands are teaching-model outputs, not field measurements. Advanced K values are illustrative inputs.</span></div></div>
+              <aside class="source-citations"><section class="aside-card"><div class="section-kicker">SOURCE NOTES</div><h3>Where to check the science</h3><p>These sources support the science and Perth setting. No unverified conductivity range is presented as measured data here; advanced values are clearly marked as illustrative model inputs.</p><ul class="citation-list"><li><a href="https://pubs.usgs.gov/of/1993/ofr93-643/" target="_blank" rel="noreferrer">USGS — Porosity and permeability</a><small>Explains pore space and how connected openings allow groundwater to move.</small></li><li><a href="https://pubs.usgs.gov/sir/2008/5169/table3.html" target="_blank" rel="noreferrer">USGS — Hydraulic conductivity of aquifer sediments</a><small>Published measurements vary widely with material and conditions.</small></li><li><a href="https://pubs.usgs.gov/wsp/2310/report.pdf" target="_blank" rel="noreferrer">USGS — Hydraulic properties of rocks</a><small>Rock properties vary with fractures and sample context.</small></li><li><a href="https://library.dpird.wa.gov.au/bulletins/345/" target="_blank" rel="noreferrer">WA DPIRD — Soils of the Swan Coastal Plain</a><small>Local landforms and sediment histories help explain soil patterns.</small></li><li><a href="https://www.wa.gov.au/service/natural-resources/mineral-resources/geoview-search-geoscience-and-titles-information" target="_blank" rel="noreferrer">GeoVIEW.WA</a><small>Official map resource for broad geology patterns in Western Australia.</small></li></ul></section><section class="aside-card simplification-card"><span class="reference-icon">✳</span><div class="section-kicker">MODEL SIMPLIFICATION</div><p>Compaction lowers the available pore space and hydraulic conductivity in this teaching model. The curve is intentionally simple and is not a geotechnical compaction law. The fictional rain-garden sites are not surveyed locations.</p></section></aside></div>
+          </section>
+
+          <section id="view-join" class="view join-view" aria-labelledby="join-title" hidden>
+            <div class="join-card"><div class="join-illustration"><span>⌁</span></div><div class="eyebrow"><span class="eyebrow-mark">WELCOME TO FIELDNOTES</span></div><h1 id="join-title">Join your class.</h1><p>Enter your teacher’s class code, then type the first or full name on the class list.</p><form id="join-form"><label class="field-label" for="join-code">Class code</label><input id="join-code" class="text-input code-input" maxlength="10" placeholder="Enter the class code" required autocomplete="off" /><label class="field-label" for="join-name">Your first or full name</label><input id="join-name" class="text-input" maxlength="50" placeholder="Name your teacher knows" required autocomplete="name" /><button class="run-button join-submit" type="submit">Join class <span>→</span></button></form><div id="join-error" class="join-error" role="alert" hidden>Please enter your first, or first and last name</div><small class="join-privacy">Your work is saved in this browser so you can return using the same class code and name.</small></div>
+          </section>
+
+          <div id="info-dialog" class="dialog-backdrop" hidden>
+            <section class="info-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="dialog-close" id="dialog-close" aria-label="Close explanation">×</button><div class="section-kicker">A NOTE FROM THE FIELD GUIDE</div><h2 id="dialog-title">Water follows the path of least resistance.</h2><div id="dialog-content" class="dialog-content"></div><button class="small-primary dialog-done" id="dialog-done">Got it</button></section>
+          </div>
+        </main>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
