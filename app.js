@@ -1515,11 +1515,109 @@
     };
     const learner = state.students.find((item) => item.id === state.selectedReplayStudentId);
     $("#replay-caption").textContent = `${learner ? `${learner.name} · ` : ""}${index + 1} / ${events.length} · ${messages[event.type] || "Activity state updated."}`;
-    const replayFrame = $("#replay-frame");
-    const replayIds = [replay.selected, ...replay.comparison].filter((id, itemIndex, list) => list.indexOf(id) === itemIndex);
-    replayFrame.classList.toggle("is-comparing", replayIds.length > 1);
-    if (replayIds.length > 1) renderComparisonSamples(replayIds, replayFrame, replay);
-    else renderActivitySvg(replayFrame, material, replay.headCm, replay.running, false, replay);
+    renderReplayDashboard(replay, material);
+  }
+
+  function renderReplayDashboard(replay, selectedMaterial) {
+    const frame = $("#replay-frame");
+    const ids = [replay.selected, ...(Array.isArray(replay.comparison) ? replay.comparison : [])]
+      .filter((id, index, list) => materialById[id] && list.indexOf(id) === index);
+    const materialsInReplay = ids.length ? ids.map((id) => getMaterial(id)) : [selectedMaterial];
+    const elapsed = Math.max(0, Number(replay.elapsed) || 0);
+    const settings = [
+      { label: "Water head", value: Number(replay.headCm) || 15, min: 5, max: 30, unit: "cm" },
+      { label: "Sample depth", value: Number(replay.depthCm) || 10, min: 5, max: 30, unit: "cm" },
+      { label: "Compaction", value: Number(replay.compaction) || 0, min: 0, max: 100, unit: "%" }
+    ];
+    const sliderMarkup = settings.map((setting) => {
+      const position = Math.max(0, Math.min(100, (setting.value - setting.min) / (setting.max - setting.min) * 100));
+      return '<div class="replay-setting"><div><span>' + setting.label + '</span><output>' + setting.value + setting.unit + '</output></div><div class="replay-track" role="img" aria-label="' + setting.label + ': ' + setting.value + setting.unit + ', view only"><i style="width:' + position + '%"></i></div><small><span>' + setting.min + setting.unit + '</span><span>' + setting.max + setting.unit + '</span></small></div>';
+    }).join("");
+    const materialMarkup = materialsInReplay.map((material, index) => {
+      const color = GRAPH_COLORS[index % GRAPH_COLORS.length];
+      const porosity = effectivePorosity(material, replay.compaction);
+      const k = effectiveK(material, replay.compaction);
+      const power = Math.floor(Math.log10(k));
+      const permeability = power <= -7 ? "Very low" : power <= -5 ? "Low" : power <= -3 ? "Moderate" : "High";
+      const permeabilityPosition = ({ "Very low": 12.5, Low: 37.5, Moderate: 62.5, High: 87.5 })[permeability];
+      return '<article class="replay-material-card" style="--replay-material:' + color + '"><strong><i></i>' + escapeHtml(material.label) + '</strong><div class="replay-property"><span>Porosity <output>' + porosity.toFixed(0) + '%</output></span><div class="replay-track" role="meter" aria-label="' + escapeHtml(material.label) + ' porosity, ' + porosity.toFixed(0) + ' percent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + porosity.toFixed(0) + '"><i style="width:' + porosity + '%"></i></div><small><span>0%</span><span>100%</span></small></div><div class="replay-property"><span>Permeability <output>' + permeability + '</output></span><div class="replay-track" role="img" aria-label="' + escapeHtml(material.label) + ' illustrative permeability category: ' + permeability + '"><i style="width:' + permeabilityPosition + '%"></i></div><small><span>Very low</span><span>High</span></small></div></article>';
+    }).join("");
+    const valuesMarkup = materialsInReplay.map((material, index) => {
+      const series = replay.series && replay.series[material.id];
+      const volume = Number.isFinite(series && series.cursorVolume) ? series.cursorVolume : Number(series && series.volume) || 0;
+      const color = GRAPH_COLORS[index % GRAPH_COLORS.length];
+      return '<div class="replay-volume-row"><span><i style="background:' + color + '"></i>' + escapeHtml(material.label) + '</span><strong>' + formatVolume(volume) + ' <small>mL</small></strong></div>';
+    }).join("");
+    const visualMarkup = materialsInReplay.length > 1
+      ? '<div id="replay-comparison-visual" class="replay-sample-visual"></div>'
+      : '<div id="replay-activity-visual" class="replay-sample-visual"></div>';
+    frame.classList.toggle("is-comparing", materialsInReplay.length > 1);
+    frame.classList.add("replay-investigation");
+    frame.setAttribute("aria-label", "Reconstructed Permeability Lab at " + formatClock(elapsed) + " with " + materialsInReplay.map((item) => item.label).join(", ") + ".");
+    frame.innerHTML =
+      '<div class="replay-investigation-head"><span>PERMEABILITY LAB <i>REPLAY VIEW</i></span><strong>' + formatClock(elapsed) + '</strong></div>' +
+      '<div class="replay-investigation-grid">' +
+      '<aside class="replay-settings-panel"><div class="replay-panel-heading"><span>INVESTIGATION SETTINGS</span><small>View only</small></div>' + sliderMarkup +
+      '<div class="replay-material-heading"><span>SELECTED MATERIALS</span><small>Model property scales</small></div><div class="replay-material-scales">' + materialMarkup + '</div></aside>' +
+      '<section class="replay-sample-panel"><div class="replay-panel-heading"><span>SIMULATED SOIL SAMPLE</span><small>' + (replay.running ? "Flowing at this event" : replay.hasRun ? "Trial state" : "Ready") + '</small></div>' +
+      visualMarkup + '<div class="replay-data-readout"><div><span>ELAPSED</span><strong>' + formatClock(elapsed) + '</strong></div><div class="replay-volume-readout"><span>COLLECTED</span>' + valuesMarkup + '</div></div></section>' +
+      '<section class="replay-evidence-panel"><div class="replay-panel-heading"><span>YOUR EVIDENCE</span><small>Shared linear axes</small></div><h3>Water collected over time</h3>' +
+      '<svg id="replay-volume-chart" viewBox="0 0 520 260" role="img" aria-label="Reconstructed cumulative water graph"></svg><div id="replay-chart-legend" class="replay-chart-legend"></div>' +
+      '<p class="replay-chart-note">Solid line: recorded result to this point. Dotted line: estimate from the settings shown. Every material uses the same linear axes.</p></section></div>';
+    if (materialsInReplay.length > 1) {
+      renderComparisonSamples(materialsInReplay.map((item) => item.id), $("#replay-comparison-visual"), replay);
+    } else {
+      renderActivitySvg($("#replay-activity-visual"), materialsInReplay[0], replay.headCm, replay.running, false, replay);
+    }
+    renderReplayChart(replay, materialsInReplay);
+  }
+
+  function renderReplayChart(replay, materialsInReplay) {
+    const chart = $("#replay-volume-chart");
+    if (!chart) return;
+    const W = 520, H = 260, left = 66, right = 14, top = 18, bottom = 42;
+    const plotW = W - left - right, plotH = H - top - bottom;
+    const xMax = 120, visibleTime = Math.min(xMax, Math.max(0, Number(replay.elapsed) || 0));
+    const xStep = 30;
+    const x = (time) => left + Math.min(xMax, Math.max(0, time)) / xMax * plotW;
+    const projections = materialsInReplay.map((material) => {
+      const series = replay.series && replay.series[material.id];
+      const collected = Number.isFinite(series && series.cursorVolume) ? series.cursorVolume : Number(series && series.volume) || 0;
+      const rate = hydraulics(material, replay).qMlSec;
+      return { material, series, collected, rate, endVolume: replay.hasRun ? collected + rate * (xMax - visibleTime) : rate * xMax };
+    });
+    const values = [0, ...projections.map((item) => item.endVolume), ...projections.flatMap((item) => (item.series && item.series.points || []).filter((point) => point.t <= visibleTime).map((point) => point.v))];
+    const dataMax = Math.max(...values, .00001);
+    const yStep = niceStep(dataMax / 5);
+    const yMax = Math.max(yStep, Math.ceil(dataMax / yStep) * yStep);
+    const y = (value) => top + plotH - Math.min(yMax, Math.max(0, value)) / yMax * plotH;
+    let svg = '<title>Shared linear graph at ' + formatClock(visibleTime) + '</title>';
+    for (let value = 0; value <= yMax + yStep * 1e-8; value += yStep) {
+      const yy = y(value);
+      svg += '<line class="chart-grid" x1="' + left + '" y1="' + yy + '" x2="' + (W - right) + '" y2="' + yy + '"/><text class="chart-label" x="' + (left - 7) + '" y="' + (yy + 3) + '" text-anchor="end">' + formatAxis(value, yStep) + '</text>';
+    }
+    for (let value = 0; value <= xMax; value += xStep) {
+      const xx = x(value);
+      svg += '<line class="chart-grid chart-time-grid" x1="' + xx + '" y1="' + top + '" x2="' + xx + '" y2="' + (top + plotH) + '"/><text class="chart-label" x="' + xx + '" y="' + (top + plotH + 15) + '" text-anchor="middle">' + value + '</text>';
+    }
+    svg += '<line class="chart-axis" x1="' + left + '" y1="' + top + '" x2="' + left + '" y2="' + (top + plotH) + '"/><line class="chart-axis" x1="' + left + '" y1="' + (top + plotH) + '" x2="' + (W - right) + '" y2="' + (top + plotH) + '"/>';
+    projections.forEach(({ material, series, collected, rate }, index) => {
+      const color = GRAPH_COLORS[index % GRAPH_COLORS.length];
+      if (replay.hasRun && series) {
+        const points = (series.points || [{ t: 0, v: 0 }]).filter((point) => point.t <= visibleTime).map((point) => ({ t: point.t, v: point.v }));
+        const last = points[points.length - 1];
+        if (!last || last.t < visibleTime) points.push({ t: visibleTime, v: collected });
+        const path = points.map((point, i) => (i ? "L" : "M") + " " + x(point.t).toFixed(1) + " " + y(point.v).toFixed(1)).join(" ");
+        svg += '<path class="chart-line" stroke="' + color + '" d="' + path + '"/>';
+        if (visibleTime < xMax) svg += '<path class="chart-line forecast" stroke="' + color + '" d="M ' + x(visibleTime) + ' ' + y(collected) + ' L ' + x(xMax) + ' ' + y(collected + rate * (xMax - visibleTime)) + '"/>';
+      } else {
+        svg += '<path class="chart-line forecast" stroke="' + color + '" d="M ' + x(0) + ' ' + y(0) + ' L ' + x(xMax) + ' ' + y(rate * xMax) + '"/>';
+      }
+    });
+    svg += '<text class="chart-axis-title" x="16" y="' + (top + plotH / 2) + '" text-anchor="middle" transform="rotate(-90 16 ' + (top + plotH / 2) + ')">WATER COLLECTED (mL)</text><text class="chart-axis-title" x="' + (left + plotW / 2) + '" y="' + (H - 3) + '" text-anchor="middle">TIME (seconds)</text>';
+    chart.innerHTML = svg;
+    chart.setAttribute("aria-label", "Reconstructed cumulative water collected against time on one shared linear scale: " + projections.map((item) => item.material.label + ": " + formatVolume(item.collected) + " millilitres").join("; ") + ".");
+    $("#replay-chart-legend").innerHTML = projections.map(({ material, collected }, index) => '<span class="replay-legend-item"><i style="background:' + GRAPH_COLORS[index % GRAPH_COLORS.length] + '"></i>' + escapeHtml(material.label) + ' <strong>' + formatVolume(collected) + ' mL</strong></span>').join("");
   }
 
   function showToast(message) {
