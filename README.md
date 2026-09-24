@@ -6,32 +6,33 @@ A responsive, browser-based classroom tool for investigating water movement thro
 
 Open `index.html` in a modern browser. For reliable save and student-link behaviour, serve the folder as a static website and open it on `localhost` or a hosted domain.
 
-The teacher desk displays a student version link ending in `?mode=join&code=...`, which fills in the current class code for students. Each class receives a random code when it is first created. Codes stay stable when you reopen the site; use **New class code** to replace one, then share the refreshed student link. Students enter the first or full name their teacher added to the roster. Names are checked without case sensitivity. A unique first name is accepted; if it is not a match, the site asks: “Please enter your first, or first and last name”.
+The teacher desk displays a student version link ending in `?mode=join&code=...`, which fills in the current class code for students. Each class receives a random student class code and a separate random teacher recovery code. Share only the class code with students and keep the teacher code private. Enter both codes in **Recover a saved class** to reopen a class on this browser. Lesson History can fill the class code into the recovery form; the teacher code is still required. Students enter the first or full name their teacher added to the roster. Names are checked without case sensitivity. A unique first name is accepted; if it is not a match, the site asks: “Please enter your first, or first and last name”.
 
 ## Included
 
 - Large, high-contrast text and more spacing throughout the activity and teacher pages.
 - Ten illustrated materials available in both Simple and Advanced modes, with a visual material picker and a selected-material illustration.
 - A large animated permeameter illustration beside the cumulative water graph. Comparison samples stack vertically so each can be read and watched together.
-- A trial-time slider and 10-second advance button that update elapsed time, collected water, the sample view and graph together.
-- A single-material graph with a linear vertical scale. Material and saved-trial comparisons use a labelled logarithmic scale with a fixed time window and readable millilitre values, keeping slower results visible beside faster ones.
+- A 0–120-second trial timeline and 10-second advance button. Scrubbing backward inspects stored values; moving forward extends the cumulative simulation using the current settings.
+- One comparison graph for one to three materials, with a shared linear millilitre axis, nice dynamic tick intervals and a shared 0–120-second time axis. Solid lines preserve recorded cumulative results; dotted lines estimate future results under the current settings. Small volumes may sit close to zero when compared with much larger volumes.
+- Parameter changes during a trial are stored as per-material simulation events, so collected water before a change stays fixed and later flow changes the line slope. Saved trial exports include the settings in effect at each recorded point.
 - Newest-first Activity History with the water head, material depth, compaction, collected volume, elapsed time and pore space for each saved attempt. Saved result lines can be overlaid on the graph, and each attempt can be downloaded as CSV.
 - Short graph explanations, glossary meanings and everyday examples. Glossary help works with hover, keyboard focus and click/touch.
 - A four-step Investigation Guide that updates with learner progress and links directly to its questions.
 - A short inquiry sequence that students can answer using Simple mode. Teachers can edit the task, learning intention, prompts and step notes for each class.
-- A teacher desk with multiple saved classes, editable names, random class codes, alphabetised rosters, bulk name pasting, learner add/edit/remove controls, class closing, student join link, learner profiles, manual marks and feedback, full comparison-aware session replay, and CSV export.
+- A teacher desk with multiple saved classes, editable names, random class codes, teacher class-code recovery, expandable lesson history, alphabetised rosters, bulk name pasting, learner add/edit/remove controls, class closing, student join link, learner profiles, manual marks and feedback, full comparison-aware session replay, and CSV export.
 - A student join URL and QR-code dialog in the header, plus a teacher-only learner preview route with a clear return to the Teacher Desk. The QR image is requested from QRServer when opened; the encoded destination is the public student join URL.
 - Per-class local storage for lesson settings and per-learner local storage for answers, progress and replay events. A learner can rejoin on the same browser using the same code and name.
 
 ## Classroom storage boundary
 
-This package is a static front-end prototype. It saves records in the current browser’s local storage. Multiple tabs in the same browser profile can see updates, but a student using a different browser profile or device cannot share a teacher’s roster or report yet. Publishing the files will create a student join URL, but shared cross-device classes require a connected database and teacher/student authentication. The current join page is not an access-control system.
+This package is a static front-end prototype. It saves records in the current browser’s local storage. Multiple tabs in the same browser profile can see updates, but a different browser profile or device cannot retrieve a class by entering its codes alone. The paired class and teacher codes provide a no-account recovery flow only where the saved class data is present. Shared cross-device classes require connected storage that verifies the teacher recovery code and limits student access. The current join page is not an access-control system.
 
 The student join URL is generated from the website’s current origin, so it will point at the published domain when hosted. The code and roster still need shared server storage before students on separate devices can join that class. A changing code is stored on the teacher’s device only in this preview, so it cannot make a class available to another device by itself.
 
 ## Publish with GitHub Pages
 
-This folder is ready to publish from the root of a public GitHub repository. The included `.github/workflows/pages.yml` workflow deploys the static files to GitHub Pages whenever `main` is updated, including a direct classroom route at `/local-geology/water-movement-permeability-and-porosity/`. In the repository’s **Settings → Pages**, choose **GitHub Actions** as the build and deployment source. GitHub Pages is public; the repository source will also be public on the free plan.
+The included `.github/workflows/pages.yml` workflow expects `index.html`, `app.js` and `styles.css` at the repository root and deploys them to GitHub Pages whenever `main` is updated, including a direct classroom route at `/local-geology/water-movement-permeability-and-porosity/`. Copy those three files to the repository root alongside `.github/workflows/pages.yml`. In the repository’s **Settings → Pages**, choose **GitHub Actions** as the build and deployment source. GitHub Pages is public; the repository source will also be public on the free plan.
 
 ## Shared-class deployment path
 

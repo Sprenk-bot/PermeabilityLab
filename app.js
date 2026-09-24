@@ -36,7 +36,7 @@
   const defaultWorkflowNotes = [
     "Choose three materials. Before running, note which you expect to pass water fastest and why.",
     "Keep water head, sample depth and compaction the same. Run your three materials together or one at a time with the same setup.",
-    "At the same elapsed time, compare the labelled collected volumes. The comparison graph uses a logarithmic scale, so use the mL labels rather than line steepness alone. Use that evidence for Form Q7.",
+    "At the same elapsed time, compare the labelled collected volumes on the graph's linear scale. Small values may be difficult to see when results differ greatly, so use the displayed mL values. Use that evidence for Form Q7.",
     "Compare pore space with flow, explain the grain pattern, then note one limit and one useful next test."
   ];
   const legacyGraphPrompt = "Which of your three materials let water move fastest? Use the graph as evidence: compare the lines at the same time, or describe which line rose most steeply.";
@@ -108,7 +108,7 @@
   }
   function makeClass(name, code, learners = []) {
     return {
-      id: createId("class"), name: String(name || "New class").trim().slice(0, 80), code: code || "RIVER7",
+      id: createId("class"), name: String(name || "New class").trim().slice(0, 80), code: code || "RIVER7", teacherCode: generateTeacherRecoveryCode(),
       students: learners.map(normalizeStudent), lessonTitle: "Where does the water go?",
       lessonIntentions: defaultLearningIntention,
       lessonDescription: "Choose three materials. Keep the setup the same and record what changes.",
@@ -126,16 +126,18 @@
   }) : [];
   const storedClasses = Array.isArray(saved.classes) ? saved.classes.filter((item) => item && typeof item === "object").map((item) => {
     const fresh = makeClass(item.name, item.code, []);
-    return { ...fresh, ...item, id: item.id || fresh.id, name: String(item.name || fresh.name).trim().replace(/\s+/g, " ").slice(0, 80), code: String(item.code || fresh.code).toUpperCase(), lessonIntentions: String(item.lessonIntentions || defaultLearningIntention), students: (Array.isArray(item.students) ? item.students : []).map(normalizeStudent), questionPrompts: migrateQuestionPrompts(item.questionPrompts || fresh.questionPrompts), workflowNotes: migrateWorkflowNotes(item.workflowNotes || fresh.workflowNotes) };
+    const savedName = String(item.name || fresh.name).trim().replace(/\s+/g, " ").slice(0, 80);
+    return { ...fresh, ...item, id: item.id || fresh.id, name: savedName === "Water & the land" ? "Class name" : savedName, code: String(item.code || fresh.code).toUpperCase(), teacherCode: String(item.teacherCode || fresh.teacherCode).toUpperCase(), lessonIntentions: String(item.lessonIntentions || defaultLearningIntention), students: (Array.isArray(item.students) ? item.students : []).map(normalizeStudent), questionPrompts: migrateQuestionPrompts(item.questionPrompts || fresh.questionPrompts), workflowNotes: migrateWorkflowNotes(item.workflowNotes || fresh.workflowNotes) };
   }) : [];
   const needsFirstClassCodeSave = !storedClasses.length && !saved.classCode;
-  const classRecords = storedClasses.length ? storedClasses : [Object.assign(makeClass(saved.className || "Water & the land", saved.classCode || generateClassCode(), oldStudents), {
+  const needsTeacherCodeSave = storedClasses.length ? storedClasses.some((item) => !item.teacherCode) : !saved.teacherCode;
+  const classRecords = storedClasses.length ? storedClasses : [Object.assign(makeClass(saved.className && saved.className !== "Water & the land" ? saved.className : "Class name", saved.classCode || generateClassCode(), oldStudents), {
     lessonTitle: typeof saved.lessonTitle === "string" ? saved.lessonTitle : "Where does the water go?",
     lessonIntentions: typeof saved.lessonIntentions === "string" ? saved.lessonIntentions : defaultLearningIntention,
     lessonDescription: typeof saved.lessonDescription === "string" ? saved.lessonDescription : "Choose three materials. Keep the setup the same and record what changes.",
     questionPrompts: migrateQuestionPrompts(saved.questionPrompts),
     workflowNotes: migrateWorkflowNotes(saved.workflowNotes),
-    published: Boolean(saved.published), classClosed: Boolean(saved.classClosed), events: Array.isArray(saved.events) ? saved.events : [], draftAnswers: saved.answers || {}
+    published: Boolean(saved.published), classClosed: Boolean(saved.classClosed), events: Array.isArray(saved.events) ? saved.events : [], draftAnswers: saved.answers || {}, teacherCode: String(saved.teacherCode || generateTeacherRecoveryCode()).toUpperCase()
   })];
   const activeClassId = classRecords.some((item) => item.id === saved.activeClassId) ? saved.activeClassId : classRecords[0].id;
   const initialClass = classRecords.find((item) => item.id === activeClassId) || classRecords[0];
@@ -156,7 +158,7 @@
     depthCm: Number.isFinite(initialActivity.depthCm) ? initialActivity.depthCm : 10,
     compaction: Number.isFinite(initialActivity.compaction) ? initialActivity.compaction : 0,
     comparison: Array.isArray(initialActivity.comparison) ? initialActivity.comparison.filter((id) => materialById[id]).slice(0, 2) : [],
-    elapsed: Number.isFinite(initialActivity.elapsed) ? initialActivity.elapsed : 0,
+    elapsed: Number.isFinite(initialActivity.elapsed) ? Math.max(0, Math.min(120, initialActivity.elapsed)) : 0,
     hasRun: Boolean(initialActivity.hasRun),
     series: initialActivity.series && typeof initialActivity.series === "object" ? initialActivity.series : {},
     history: Array.isArray(initialActivity.history) ? initialActivity.history.slice(0, 15) : [],
@@ -224,7 +226,7 @@
       state.headCm = Number.isFinite(savedActivity.headCm) ? savedActivity.headCm : state.headCm;
       state.depthCm = Number.isFinite(savedActivity.depthCm) ? savedActivity.depthCm : state.depthCm;
       state.compaction = Number.isFinite(savedActivity.compaction) ? savedActivity.compaction : state.compaction;
-      state.elapsed = Number.isFinite(savedActivity.elapsed) ? savedActivity.elapsed : state.elapsed;
+      state.elapsed = Number.isFinite(savedActivity.elapsed) ? Math.max(0, Math.min(120, savedActivity.elapsed)) : state.elapsed;
       state.hasRun = Boolean(savedActivity.hasRun);
       state.series = savedActivity.series && typeof savedActivity.series === "object" ? savedActivity.series : state.series;
       state.history = Array.isArray(savedActivity.history) ? savedActivity.history.slice(0, 15) : state.history;
@@ -236,6 +238,8 @@
   function captureClassState() {
     const record = activeClass();
     if (!record) return;
+    record.updatedAt = Date.now();
+    if (!record.createdAt) record.createdAt = record.updatedAt;
     record.students = state.students;
     record.lessonTitle = state.lessonTitle;
     record.lessonIntentions = state.lessonIntentions;
@@ -278,7 +282,7 @@
       lessonTitle: state.lessonTitle, lessonDescription: state.lessonDescription,
       lessonIntentions: state.lessonIntentions,
       classClosed: state.classClosed, classes: state.classRecords, activeClassId: state.activeClassId,
-      currentStudentId: state.currentStudentId, className: activeClass()?.name, classCode: activeClass()?.code
+      currentStudentId: state.currentStudentId, className: activeClass()?.name, classCode: activeClass()?.code, teacherCode: activeClass()?.teacherCode
     };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(copy)); } catch { /* The activity still works if storage is unavailable. */ }
   }
@@ -372,17 +376,18 @@
     wrapper.addEventListener("focusout", (event) => { if (!wrapper.contains(event.relatedTarget)) setPickerOpen(wrapperId, menuId, triggerId, false); });
   }
 
-  function compactionFactor(material) {
-    const amount = state.compaction / 100;
+  function compactionFactor(material, compaction = state.compaction) {
+    const amount = compaction / 100;
     const base = Math.max(.08, 1 - amount * .72);
     return Math.pow(base, material.sensitivity > .75 ? 2.15 : 1.15);
   }
-  function effectiveK(material) { return material.k * compactionFactor(material); }
-  function effectivePorosity(material) { return Math.max(1, material.porosity - (state.compaction / 100) * 18); }
-  function hydraulics(material) {
-    const k = effectiveK(material);
-    const headM = state.headCm / 100;
-    const lengthM = state.depthCm / 100;
+  function effectiveK(material, compaction = state.compaction) { return material.k * compactionFactor(material, compaction); }
+  function effectivePorosity(material, compaction = state.compaction) { return Math.max(1, material.porosity - (compaction / 100) * 18); }
+  function hydraulics(material, settings = null) {
+    const current = settings || state;
+    const k = effectiveK(material, current.compaction);
+    const headM = current.headCm / 100;
+    const lengthM = current.depthCm / 100;
     const gradient = headM / lengthM;
     const qM3s = k * AREA_M2 * gradient;
     return { k, headM, lengthM, gradient, qM3s, qMlSec: qM3s * 1e6, qMlMin: qM3s * 6e7, darcyFlux: k * gradient };
@@ -403,9 +408,9 @@
   function formatAxis(value, max) {
     if (value === 0) return "0";
     if (value < .001) return value.toExponential(0).replace("e-", "e−");
-    if (value < .1) return value.toFixed(3);
-    if (value < 1) return value.toFixed(2);
-    if (value < 10) return value.toFixed(1);
+    if (value < 1) return value.toFixed(3);
+    if (value < 10) return value.toFixed(2);
+    if (value < 100) return value.toFixed(1);
     return value.toFixed(0);
   }
   function niceCeil(value) {
@@ -415,6 +420,59 @@
     const fraction = value / power;
     const step = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
     return step * power;
+  }
+
+  function niceStep(value) {
+    if (!Number.isFinite(value) || value <= 0) return 1;
+    const exponent = Math.floor(Math.log10(value));
+    const power = Math.pow(10, exponent);
+    const fraction = value / power;
+    return (fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10) * power;
+  }
+
+  function currentFlowSettings() {
+    return { headCm: state.headCm, depthCm: state.depthCm, compaction: state.compaction };
+  }
+
+  function appendSeriesPoint(series, t, volume) {
+    const point = { t, v: volume };
+    const last = series.points[series.points.length - 1];
+    if (last && Math.abs(last.t - t) < 1e-7) series.points[series.points.length - 1] = point;
+    else series.points.push(point);
+  }
+
+  function addSimulationEvent(id) {
+    const series = state.series[id];
+    if (!series) return;
+    series.events ||= [];
+    series.points ||= [{ t: 0, v: 0 }];
+    const material = getMaterial(id);
+    const event = { t: state.elapsed, v: series.volume, rate: hydraulics(material).qMlSec, settings: currentFlowSettings() };
+    const last = series.events[series.events.length - 1];
+    if (last && Math.abs(last.t - event.t) < 1e-7) series.events[series.events.length - 1] = event;
+    else series.events.push(event);
+    appendSeriesPoint(series, event.t, event.v);
+  }
+
+  function volumeAt(id, time) {
+    const points = state.series[id]?.points || [];
+    if (!points.length || time <= points[0].t) return 0;
+    for (let i = 1; i < points.length; i += 1) {
+      const right = points[i];
+      if (time <= right.t) {
+        const left = points[i - 1];
+        const span = right.t - left.t;
+        return span > 0 ? left.v + (right.v - left.v) * ((time - left.t) / span) : right.v;
+      }
+    }
+    return points[points.length - 1].v;
+  }
+
+  function recordedUntil() {
+    return Math.max(0, ...activeMaterialIds().map((id) => {
+      const points = state.series[id]?.points || [];
+      return points[points.length - 1]?.t || 0;
+    }));
   }
 
   function logEvent(type, payload = {}) {
@@ -439,12 +497,7 @@
     const series = structuredCloneSafe(state.series);
     activeMaterialIds().forEach((id) => {
       if (!series[id]) return;
-      let points = series[id].points || (series[id].points = [{ t: 0, v: 0 }]);
-      if (points.length > 151) {
-        const stride = Math.ceil((points.length - 1) / 150);
-        points = points.filter((point, index) => index % stride === 0 || index === series[id].points.length - 1);
-        series[id].points = points;
-      }
+      const points = series[id].points || (series[id].points = [{ t: 0, v: 0 }]);
       const last = points[points.length - 1];
       if (!last || last.t < state.elapsed) points.push({ t: state.elapsed, v: series[id].volume || 0 });
     });
@@ -480,9 +533,12 @@
 
   function initializeSeries() {
     state.series = {};
-    activeMaterialIds().forEach((id) => { state.series[id] = { volume: 0, points: [{ t: 0, v: 0 }] }; });
-    state.hasRun = true;
     state.elapsed = 0;
+    activeMaterialIds().forEach((id) => {
+      state.series[id] = { volume: 0, points: [{ t: 0, v: 0 }], events: [] };
+      addSimulationEvent(id);
+    });
+    state.hasRun = true;
     state.nextSampleAt = 1;
     state.nextSnapshotAt = 15;
   }
@@ -492,28 +548,39 @@
     const dt = Math.max(0, Math.min((now - state.lastTick) / 1000, 4));
     if (!dt) return;
     state.lastTick = now;
-    state.elapsed += dt;
-    activeMaterialIds().forEach((id) => {
-      if (!state.series[id]) state.series[id] = { volume: 0, points: [{ t: 0, v: 0 }] };
-      const series = state.series[id];
-      series.volume += hydraulics(getMaterial(id)).qMlSec * dt;
-    });
-    if (state.elapsed >= state.nextSampleAt) {
-      activeMaterialIds().forEach((id) => {
-        const series = state.series[id];
-        if (series) series.points.push({ t: state.elapsed, v: series.volume });
-      });
-      state.nextSampleAt = Math.floor(state.elapsed) + 1;
+    const startTime = state.elapsed;
+    const endTime = Math.min(120, startTime + dt);
+    const actualDt = endTime - startTime;
+    if (actualDt <= 0) { state.running = false; return; }
+    const sampleTimes = [];
+    while (state.nextSampleAt <= endTime) {
+      if (state.nextSampleAt > startTime) sampleTimes.push(state.nextSampleAt);
+      state.nextSampleAt += 1;
     }
+    activeMaterialIds().forEach((id) => {
+      if (!state.series[id]) state.series[id] = { volume: 0, points: [{ t: 0, v: 0 }], events: [] };
+      const series = state.series[id];
+      const rate = hydraulics(getMaterial(id)).qMlSec;
+      const startingVolume = series.volume;
+      series.volume += rate * actualDt;
+      sampleTimes.forEach((time) => appendSeriesPoint(series, time, startingVolume + rate * (time - startTime)));
+      if (endTime >= 120) appendSeriesPoint(series, 120, series.volume);
+    });
+    state.elapsed = endTime;
     if (state.elapsed >= state.nextSnapshotAt) {
       logEvent("state_snapshot", { selected: state.selected, headCm: state.headCm, depthCm: state.depthCm, compaction: state.compaction, comparison: [...state.comparison], series: structuredCloneSafe(state.series), mode: state.mode });
       state.nextSnapshotAt = Math.floor(state.elapsed / 15 + 1) * 15;
     }
+    if (state.elapsed >= 120) state.running = false;
   }
 
   function structuredCloneSafe(value) { return JSON.parse(JSON.stringify(value)); }
 
   function setRunning(shouldRun) {
+    if (shouldRun && state.hasRun && state.elapsed < recordedUntil() - 1e-6) {
+      showToast("Return to the latest recorded time before continuing the trial.");
+      return;
+    }
     if (shouldRun && !state.hasRun) initializeSeries();
     if (shouldRun === state.running) return;
     if (shouldRun) {
@@ -521,11 +588,15 @@
       state.lastTick = performance.now();
       state.completedMaterials.add(state.selected);
       state.comparison.forEach((id) => state.completedMaterials.add(id));
-      logEvent("flow_started", { selected: state.selected, comparison: [...state.comparison], headCm: state.headCm, depthCm: state.depthCm, compaction: state.compaction });
+      logEvent("flow_started", { selected: state.selected, comparison: [...state.comparison], headCm: state.headCm, depthCm: state.depthCm, compaction: state.compaction, series: structuredCloneSafe(state.series) });
     } else {
       settleClock(performance.now());
       state.running = false;
-      logEvent("flow_paused", { elapsed: state.elapsed });
+      activeMaterialIds().forEach((id) => {
+        const series = state.series[id];
+        if (series) appendSeriesPoint(series, state.elapsed, series.volume);
+      });
+      logEvent("flow_paused", { elapsed: state.elapsed, series: structuredCloneSafe(state.series) });
     }
     persist();
     renderAll();
@@ -535,7 +606,7 @@
     if (state.running) settleClock(performance.now());
     if (state.running) {
       state.running = false;
-      logEvent("flow_paused", { elapsed: state.elapsed });
+      logEvent("flow_paused", { elapsed: state.elapsed, series: structuredCloneSafe(state.series) });
     }
     const savedAttempt = archiveCurrentTrial("reset");
     resetForSeriesChange();
@@ -548,25 +619,33 @@
     const target = Math.max(0, Math.min(Number($("#trial-scrubber").max), Number(seconds) || 0));
     state.running = false;
     state.lastTick = 0;
+    if (state.hasRun && target > recordedUntil()) {
+      const startTime = recordedUntil();
+      const duration = target - startTime;
+      const sampleTimes = [];
+      const firstSample = Math.max(1, Math.floor(startTime) + 1);
+      for (let time = firstSample; time <= target; time += 1) sampleTimes.push(time);
+      activeMaterialIds().forEach((id) => {
+        const series = state.series[id];
+        if (!series) return;
+        const startVolume = series.volume;
+        const rate = hydraulics(getMaterial(id)).qMlSec;
+        sampleTimes.forEach((time) => appendSeriesPoint(series, time, startVolume + rate * (time - startTime)));
+        series.volume = startVolume + rate * duration;
+        appendSeriesPoint(series, target, series.volume);
+      });
+      state.nextSampleAt = Math.floor(target) + 1;
+    }
     state.elapsed = target;
-    state.hasRun = target > 0;
-    state.series = {};
-    activeMaterialIds().forEach((id) => {
-      const rate = hydraulics(getMaterial(id)).qMlSec;
-      const points = [{ t: 0, v: 0 }];
-      for (let second = 1; second < target; second += 1) points.push({ t: second, v: rate * second });
-      if (target > 0) points.push({ t: target, v: rate * target });
-      state.series[id] = { volume: rate * target, points };
-      if (target > 0) state.completedMaterials.add(id);
-    });
-    state.nextSampleAt = Math.floor(target) + 1;
-    state.nextSnapshotAt = Math.floor(target / 15 + 1) * 15;
+    state.hasRun = activeMaterialIds().some((id) => (state.series[id]?.points?.length || 0) > 1);
+    activeMaterialIds().forEach((id) => { if (state.hasRun && target > 0) state.completedMaterials.add(id); });
+    if (target >= recordedUntil()) state.nextSnapshotAt = Math.floor(target / 15 + 1) * 15;
     updateExperimentStatus();
     renderChart();
     renderAdvanced();
     renderProgress();
     if (recordEvent) {
-      logEvent("time_seeked", { elapsed: target });
+      logEvent("time_seeked", { elapsed: target, hasRun: state.hasRun, series: structuredCloneSafe(state.series), headCm: state.headCm, depthCm: state.depthCm, compaction: state.compaction });
       persist();
       showToast(`Model moved to ${formatClock(target)}.`);
     }
@@ -618,30 +697,23 @@
   }
 
   function renderSelectedMaterialModel(material, h, porosity) {
-    const model = $("#selected-material-model");
-    const key = `${material.id}:${state.compaction}`;
-    if (model.dataset.materialKey === key) return;
-    model.dataset.materialKey = key;
-    $("#model-material-name").textContent = material.label;
-    $("#selected-material-visual").innerHTML = materialIllustration(material);
-    $("#selected-material-visual").setAttribute("aria-label", `${material.label}: ${material.grain}. ${material.note}`);
-    const poreMeter = $("#model-porosity-meter");
-    const porePercent = Math.min(100, Math.max(0, porosity / 60 * 100));
-    poreMeter.querySelector("i").style.width = `${porePercent}%`;
-    poreMeter.setAttribute("aria-valuenow", porosity.toFixed(1));
-    poreMeter.setAttribute("aria-valuetext", `${porosity.toFixed(1)} percent porosity`);
-    $("#model-porosity-label").textContent = `${porosity.toFixed(0)}% · ${porosityBand(porosity).toLowerCase()}`;
-    const minK = Math.min(...materials.map((item) => item.k));
-    const maxK = Math.max(...materials.map((item) => item.k));
-    const permeabilityPercent = Math.min(100, Math.max(0, (Math.log10(h.k) - Math.log10(minK)) / (Math.log10(maxK) - Math.log10(minK)) * 100));
-    const kPower = Math.floor(Math.log10(h.k));
-    const permeabilityBand = kPower <= -7 ? "Very low" : kPower <= -5 ? "Low" : kPower <= -3 ? "Moderate" : "High";
-    const permeabilityMeter = $("#model-permeability-meter");
-    permeabilityMeter.querySelector("i").style.width = `${permeabilityPercent}%`;
-    permeabilityMeter.setAttribute("aria-valuenow", permeabilityPercent.toFixed(0));
-    permeabilityMeter.setAttribute("aria-valuetext", `${permeabilityBand} relative model permeability`);
-    $("#model-permeability-label").textContent = `${permeabilityBand.toLowerCase()} · model`;
-    $("#selected-model-note").textContent = `${material.grain}. ${material.note}`;
+    renderCompareMaterialReadouts();
+  }
+
+  function renderCompareMaterialReadouts() {
+    const container = $("#compare-material-readouts");
+    if (!container) return;
+    container.innerHTML = activeMaterialIds().map((id) => {
+      const material = getMaterial(id);
+      const h = hydraulics(material);
+      const porosity = effectivePorosity(material);
+      const porePercent = Math.min(100, Math.max(0, porosity));
+      const kPower = Math.floor(Math.log10(h.k));
+      const permeabilityBand = kPower <= -7 ? "Very low" : kPower <= -5 ? "Low" : kPower <= -3 ? "Moderate" : "High";
+      const permeabilityPercent = ({ "Very low": 12.5, Low: 37.5, Moderate: 62.5, High: 87.5 })[permeabilityBand];
+      const color = GRAPH_COLORS[activeMaterialIds().indexOf(id) % GRAPH_COLORS.length];
+      return `<article class="compare-property-card" style="--sample-color:${color}"><strong class="compare-property-name"><i></i>${escapeHtml(material.label)}</strong><div class="compare-property-meter"><span>Porosity <b>${porosity.toFixed(0)}% of volume</b></span><div class="model-meter" role="meter" aria-label="${escapeHtml(material.label)} modelled porosity, percentage of total volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${porosity.toFixed(1)}"><i style="width:${porePercent}%"></i></div></div><div class="compare-property-meter"><span>Permeability <b>${permeabilityBand}</b></span><div class="model-meter permeability-meter" role="meter" aria-label="${escapeHtml(material.label)} illustrative permeability category" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${permeabilityPercent.toFixed(0)}"><i style="width:${permeabilityPercent}%"></i></div><small class="meter-scale-ends"><span>Very low</span><span>High</span></small></div></article>`;
+    }).join("");
   }
 
   function renderIntroStep(step = state.introStep) {
@@ -765,7 +837,7 @@
     const gradientId = `water-grad-${svgKey}`;
     const elapsed = Number(frame.elapsed) || 0;
     const hasRun = Boolean(frame.hasRun || running);
-    const volume = frame.series?.[material.id]?.volume ?? frame.volumeMl ?? state.series[material.id]?.volume ?? 0;
+    const volume = frame === state ? getSeriesVolume(material.id) : frame.series?.[material.id]?.cursorVolume ?? frame.series?.[material.id]?.volume ?? frame.volumeMl ?? state.series[material.id]?.volume ?? 0;
     const compaction = Number.isFinite(frame.compaction) ? frame.compaction : state.compaction;
     const depthCm = Number.isFinite(frame.depthCm) ? frame.depthCm : state.depthCm;
     const qMlSec = elapsed > 0 ? volume / elapsed : hydraulics(material).qMlSec;
@@ -815,7 +887,7 @@
     target.setAttribute("aria-label", `${comparisons.length} simulated samples at ${formatClock(elapsed)}: ${comparisons.map((id) => getMaterial(id).label).join(", ")}.`);
     target.innerHTML = `<div class="sample-comparison-grid">${comparisons.map((id, index) => {
       const material = getMaterial(id);
-      const volume = frame.series?.[id]?.volume || 0;
+      const volume = frame === state ? getSeriesVolume(id) : frame.series?.[id]?.cursorVolume ?? frame.series?.[id]?.volume ?? 0;
       const qMlMin = elapsed > 0 ? (volume / elapsed) * 60 : hydraulics(material).qMlMin;
       const flow = flowBand(qMlMin);
       const porosity = Math.max(1, material.porosity - ((Number(frame.compaction) || 0) / 100) * 18);
@@ -840,16 +912,16 @@
     }).join("")}</div>`;
   }
 
-  function getSeriesVolume(id) { return state.series[id]?.volume || 0; }
+  function getSeriesVolume(id) { return state.running ? state.series[id]?.volume || 0 : volumeAt(id, state.elapsed); }
   function graphInsight() {
     const active = activeMaterialIds();
     if (active.length > 1) {
       if (state.hasRun && state.elapsed > 1) {
         const ranked = [...active].sort((a, b) => getSeriesVolume(b) - getSeriesVolume(a));
         const more = ranked[0], less = ranked[ranked.length - 1];
-        return `At ${state.elapsed.toFixed(0)} seconds, ${getMaterial(more).label} collected ${formatVolume(getSeriesVolume(more))} mL and ${getMaterial(less).label} collected ${formatVolume(getSeriesVolume(less))} mL. Read the labelled values at the same time; the logarithmic scale shows ratios.`;
+        return `At ${state.elapsed.toFixed(0)} seconds, ${getMaterial(more).label} collected ${formatVolume(getSeriesVolume(more))} mL and ${getMaterial(less).label} collected ${formatVolume(getSeriesVolume(less))} mL. Read the labelled values at the same time; small results can be hard to see on the linear scale.`;
       }
-      return "Compare the labelled water amounts at one shared time. The logarithmic scale keeps slower materials visible; equal vertical steps show equal ratios, not equal added volumes.";
+      return "All materials share one linear graph and the same axes. A low-flow material may sit close to zero beside gravel; read the labelled mL values at the same time for an honest comparison.";
     }
     const current = getMaterial();
     if (state.hasRun && state.elapsed > 1) {
@@ -862,86 +934,83 @@
 
   function renderChart() {
     const chart = $("#volume-chart");
-    const W = 520, H = 260, left = 60, top = 22, right = 16, bottom = 39;
-    const plotW = W - left - right, plotH = H - top - bottom;
-    const xMax = Math.max(Number($("#trial-scrubber").max) || 120, ...state.historyOverlays.map((key) => {
-      const split = key.indexOf("::");
-      const attempt = state.history.find((item) => item.id === key.slice(0, split));
-      return attempt?.elapsed || 0;
-    }));
+    const W = 520, H = 260, left = 65, right = 16, top = 18, bottom = 42;
     const active = activeMaterialIds();
+    const xMax = 120;
+    const plotW = W - left - right;
+    const plotH = H - top - bottom;
+    const availablePlotWidth = (chart.clientWidth || W) * plotW / W;
+    const targetXIntervals = Math.max(2, Math.floor(availablePlotWidth / 70));
+    const xStep = [10, 20, 30, 60].sort((a, b) => Math.abs(xMax / a - targetXIntervals) - Math.abs(xMax / b - targetXIntervals) || b - a)[0];
+    const visibleTime = Math.min(xMax, Math.max(0, state.elapsed));
     const overlays = state.historyOverlays.map((key) => {
       const split = key.indexOf("::");
       const attempt = state.history.find((item) => item.id === key.slice(0, split));
       const id = key.slice(split + 2);
       return attempt?.series?.[id] ? { key, attempt, id, series: attempt.series[id] } : null;
     }).filter(Boolean);
-    const observedMax = Math.max(0, ...active.map((id) => getSeriesVolume(id)), ...overlays.map((item) => item.series.volume || 0));
-    const expectedVolumes = active.map((id) => hydraulics(getMaterial(id)).qMlSec * xMax);
-    const expectedMax = Math.max(0, ...expectedVolumes);
-    const yMax = niceCeil(Math.max(observedMax, expectedMax) * 1.08 || .01);
-    const logScale = active.length + overlays.length > 1;
-    const positiveFloorCandidates = [...expectedVolumes, ...overlays.map((item) => item.series.volume || 0)].filter((value) => value > 0);
-    const linearThreshold = logScale && positiveFloorCandidates.length ? Math.max(1e-12, Math.min(.01, Math.min(...positiveFloorCandidates) / 10)) : .01;
-    const transformY = (value) => logScale ? Math.log10(1 + Math.max(0, value) / linearThreshold) : value;
-    const inverseY = (value) => logScale ? linearThreshold * (Math.pow(10, value) - 1) : value;
-    const transformedMax = transformY(yMax);
-    const x = (t) => left + Math.min(xMax, Math.max(0, t)) / xMax * plotW;
-    const y = (v) => {
-      const bounded = Math.min(yMax, Math.max(0, v));
-      const fraction = transformY(bounded) / transformedMax;
-      return top + plotH - fraction * plotH;
-    };
-    let svg = `<text class="chart-axis-title" x="${left}" y="12">WATER COLLECTED (mL)</text>`;
-    for (let i = 0; i <= 4; i += 1) {
-      const fraction = i / 4;
-      const value = inverseY(transformedMax * fraction);
-      const yy = y(value);
-      const tick = value === 0 ? "0" : formatAxis(value, yMax);
-      svg += `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${W - right}" y2="${yy}"/><text class="chart-label" x="${left - 8}" y="${yy + 3}" text-anchor="end">${tick}</text>`;
-    }
-    for (let i = 0; i <= 4; i += 1) {
-      const seconds = xMax * i / 4;
-      const xx = x(seconds);
-      svg += `<line class="chart-grid" x1="${xx}" y1="${top}" x2="${xx}" y2="${top + plotH}"/><text class="chart-label" x="${xx}" y="${H - 19}" text-anchor="middle">${seconds.toFixed(0)}</text>`;
-    }
-    svg += `<line class="chart-axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="chart-axis" x1="${left}" y1="${top + plotH}" x2="${W - right}" y2="${top + plotH}"/><text class="chart-axis-title" x="${left + plotW / 2}" y="${H - 4}" text-anchor="middle">TIME (seconds)</text>`;
-
-    active.forEach((id, index) => {
+    const x = (time) => left + Math.min(xMax, Math.max(0, time)) / xMax * plotW;
+    const projections = active.map((id) => {
       const material = getMaterial(id);
-      const color = GRAPH_COLORS[index % GRAPH_COLORS.length];
       const series = state.series[id];
-      if (!state.hasRun || !series) {
-        const forecast = hydraulics(material).qMlSec * xMax;
-        svg += `<path class="chart-line forecast" stroke="${color}" d="M ${x(0)} ${y(0)} L ${x(xMax)} ${y(forecast)}"/>`;
-      } else {
-        const points = series.points?.length ? series.points : [{ t: 0, v: 0 }];
+      const collected = series ? state.running ? series.volume : volumeAt(id, visibleTime) : 0;
+      const rate = hydraulics(material).qMlSec;
+      const endVolume = state.hasRun ? collected + rate * (xMax - visibleTime) : rate * xMax;
+      return { id, material, series, collected, rate, endVolume };
+    });
+    const values = [0, ...projections.map((item) => item.endVolume), ...projections.flatMap((item) => (item.series?.points || []).filter((point) => point.t <= visibleTime).map((point) => point.v)), ...overlays.flatMap((item) => (item.series.points || []).filter((point) => point.t <= xMax).map((point) => point.v))];
+    const dataMax = Math.max(...values, .00001);
+    const yStep = niceStep(dataMax / 5);
+    const yMax = Math.max(yStep, Math.ceil(dataMax / yStep) * yStep);
+    const y = (value) => top + plotH - Math.min(yMax, Math.max(0, value)) / yMax * plotH;
+    let svg = "";
+    for (let value = 0; value <= yMax + yStep * 1e-8; value += yStep) {
+      const yy = y(value);
+      svg += `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${W - right}" y2="${yy}"/><text class="chart-label" x="${left - 7}" y="${yy + 3}" text-anchor="end">${formatAxis(value, yStep)}</text>`;
+    }
+    for (let value = 0; value <= xMax; value += xStep) {
+      const xx = x(value);
+      svg += `<line class="chart-grid chart-time-grid" x1="${xx}" y1="${top}" x2="${xx}" y2="${top + plotH}"/><text class="chart-label" x="${xx}" y="${top + plotH + 15}" text-anchor="middle">${value}</text>`;
+    }
+    svg += `<line class="chart-axis" x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"/><line class="chart-axis" x1="${left}" y1="${top + plotH}" x2="${W - right}" y2="${top + plotH}"/>`;
+    projections.forEach(({ series, collected, rate }, index) => {
+      const color = GRAPH_COLORS[index % GRAPH_COLORS.length];
+      if (state.hasRun && series) {
+        const points = (series.points || [{ t: 0, v: 0 }]).filter((point) => point.t <= visibleTime);
+        const current = state.running ? series.volume : collected;
         const last = points[points.length - 1];
-        const line = points.map((point, pointIndex) => `${pointIndex ? "L" : "M"} ${x(point.t).toFixed(1)} ${y(point.v).toFixed(1)}`).join(" ");
-        const current = state.running ? series.volume : last.v;
-        const currentPath = last.t < state.elapsed ? ` L ${x(state.elapsed).toFixed(1)} ${y(current).toFixed(1)}` : "";
-        svg += `<path class="chart-line" stroke="${color}" d="${line}${currentPath}"/>`;
-        if (!state.running && state.elapsed > 0) svg += `<circle class="chart-point" cx="${x(state.elapsed)}" cy="${y(current)}" r="3.5" fill="${color}"/>`;
+        if (!last || last.t < visibleTime) points.push({ t: visibleTime, v: current });
+        const line = points.map((point, i) => `${i ? "L" : "M"} ${x(point.t).toFixed(1)} ${y(point.v).toFixed(1)}`).join(" ");
+        svg += `<path class="chart-line" stroke="${color}" d="${line}"/>`;
+        if (!state.running && visibleTime > 0) svg += `<circle class="chart-point" cx="${x(visibleTime)}" cy="${y(current)}" r="3.5" fill="${color}"/>`;
+        if (visibleTime < xMax) svg += `<path class="chart-line forecast" stroke="${color}" d="M ${x(visibleTime)} ${y(current)} L ${x(xMax)} ${y(current + rate * (xMax - visibleTime))}"/>`;
+      } else {
+        svg += `<path class="chart-line forecast" stroke="${color}" d="M ${x(0)} ${y(0)} L ${x(xMax)} ${y(rate * xMax)}"/>`;
       }
     });
     overlays.forEach((item, index) => {
-      const points = item.series.points?.length ? item.series.points : [{ t: 0, v: 0 }];
-      const color = HISTORY_COLORS[index % HISTORY_COLORS.length];
-      const path = points.map((point, pointIndex) => `${pointIndex ? "L" : "M"} ${x(point.t).toFixed(1)} ${y(point.v).toFixed(1)}`).join(" ");
-      svg += `<path class="chart-line history-chart-line" stroke="${color}" d="${path}"/>`;
+      const points = (item.series.points || [{ t: 0, v: 0 }]).filter((point) => point.t <= xMax);
+      const path = points.map((point, i) => `${i ? "L" : "M"} ${x(point.t).toFixed(1)} ${y(point.v).toFixed(1)}`).join(" ");
+      svg += `<path class="chart-line history-chart-line" stroke="${HISTORY_COLORS[index % HISTORY_COLORS.length]}" d="${path}"/>`;
     });
+    svg += `<text class="chart-axis-title" x="16" y="${top + plotH / 2}" text-anchor="middle" transform="rotate(-90 16 ${top + plotH / 2})">WATER COLLECTED (mL)</text><text class="chart-axis-title" x="${left + plotW / 2}" y="${H - 3}" text-anchor="middle">TIME (seconds)</text>`;
     chart.innerHTML = svg;
-    chart.setAttribute("aria-label", `Cumulative water collected against time. ${active.map((id) => `${getMaterial(id).label}: ${formatVolume(getSeriesVolume(id))} millilitres`).join("; ")}.`);
-    $("#chart-legend").innerHTML = active.map((id, i) => `<span class="legend-item"><i class="legend-dot" style="background:${GRAPH_COLORS[i % GRAPH_COLORS.length]}"></i>${escapeHtml(getMaterial(id).label)}${!state.hasRun ? " · expected" : ""}</span>`).join("") + overlays.map((item, index) => `<button type="button" class="legend-item history-legend" data-history-overlay="${escapeHtml(item.key)}" aria-label="Remove ${escapeHtml(getMaterial(item.id).label)} saved trial from graph"><i class="legend-dot" style="background:${HISTORY_COLORS[index % HISTORY_COLORS.length]}"></i>${escapeHtml(getMaterial(item.id).label)} · saved ${new Date(item.attempt.savedAt).toLocaleDateString()}</button>`).join("");
+    chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    chart.setAttribute("aria-label", `Cumulative water collected against time on one shared linear scale: ${projections.map(({ material, collected }) => `${material.label}: ${formatVolume(collected)} millilitres`).join("; ")}.`);
+    $(".chart-wrap").style.height = `${H}px`;
+    $("#chart-legend").innerHTML = projections.map(({ id, material, collected }, index) => {
+      const qualifier = state.hasRun ? "collected at selected time" : `model estimate at ${visibleTime} sec`;
+      return `<span class="legend-item"><i class="legend-dot" style="background:${GRAPH_COLORS[index % GRAPH_COLORS.length]}"></i>${escapeHtml(material.label)} · <strong>${formatVolume(collected)} mL</strong> <small>${qualifier}</small></span>`;
+    }).join("") + overlays.map((item, index) => `<button type="button" class="legend-item history-legend" data-history-overlay="${escapeHtml(item.key)}" aria-label="Remove ${escapeHtml(getMaterial(item.id).label)} saved trial from graph"><i class="legend-dot" style="background:${HISTORY_COLORS[index % HISTORY_COLORS.length]}"></i>${escapeHtml(getMaterial(item.id).label)} · saved ${new Date(item.attempt.savedAt).toLocaleDateString()}</button>`).join("");
     const scaleNote = $("#graph-scale-note");
-    scaleNote.hidden = !logScale;
-    scaleNote.textContent = logScale ? "The vertical axis uses a gentle logarithmic scale so slow and fast results stay visible together. The labelled values are still millilitres; equal vertical steps show ratios, not equal added amounts. The time axis stays fixed for the whole trial." : "";
-    $("#graph-line-reading").textContent = logScale
-      ? "Compare values at the same elapsed time. A higher point means more water collected. This logarithmic view keeps slow materials visible, so read the labels instead of comparing line angle alone."
-      : "At the same time, a higher line means more water has collected. A steeper line means a faster flow rate in this model run.";
+    scaleNote.hidden = false;
+    scaleNote.textContent = `One shared linear scale for all materials · 0–${formatAxis(yMax, yStep)} mL · ${formatAxis(yStep, yStep)} mL per vertical step`;
+    $("#graph-line-reading").textContent = active.length > 1
+      ? "All materials share one linear graph and identical axes. Large flow differences may put low-flow lines close to zero; use the labelled mL values to compare them."
+      : "The graph uses linear axes with equal increments. A higher point means more water has collected; the vertical scale updates as results grow.";
     const slopeTerm = $(".graph-term");
-    slopeTerm.dataset.tooltip = logScale
-      ? "A line rises as water accumulates. In this comparison view, the vertical axis is logarithmic, so read the labelled mL values to compare the amounts."
+    slopeTerm.dataset.tooltip = active.length > 1
+      ? "All materials share one linear vertical scale. At the same time, compare labelled millilitre values as well as line heights."
       : "Graph slope means how quickly the line rises. Example: a steeper line shows more water collected in the same time.";
     $("#graph-insight").innerHTML = `<span class="insight-stars">✳</span><span>${escapeHtml(graphInsight())}</span>`;
     const live = $("#graph-live");
@@ -1004,13 +1073,14 @@
 
   function updateExperimentStatus() {
     $("#run-trial").innerHTML = state.running ? `<span class="play-mark">Ⅱ</span><span>Pause trial</span>` : `<span class="play-mark">▶</span><span>${state.elapsed > 0 ? "Resume trial" : "Start trial"}</span>`;
+    $("#run-trial").disabled = !state.running && state.hasRun && state.elapsed >= 120;
     $("#activity-status").textContent = state.running ? "Water is moving through the sample" : state.hasRun ? "Trial paused · evidence saved" : "Ready for a new trial";
     $("#volume-value").innerHTML = `${formatVolume(getSeriesVolume(state.selected))} <small>mL</small>`;
     const minutes = Math.floor(state.elapsed / 60);
     const seconds = Math.floor(state.elapsed % 60).toString().padStart(2, "0");
     $("#time-value").textContent = `${minutes}:${seconds}`;
     const scrubber = $("#trial-scrubber");
-    const timeLimit = Math.max(120, Math.ceil(state.elapsed / 300) * 300);
+    const timeLimit = 120;
     scrubber.max = String(timeLimit);
     scrubber.value = String(Math.min(Number(scrubber.max), Math.floor(state.elapsed)));
     scrubber.disabled = state.running;
@@ -1080,6 +1150,7 @@
     $("#active-class-label").textContent = record.name;
     $("#active-class-subtitle").textContent = `${record.students.length} ${record.students.length === 1 ? "learner" : "learners"} on the list`;
     $("#join-code-display").textContent = record.code;
+    $("#teacher-recovery-code-display").textContent = record.teacherCode;
     $("#sidebar-class-name").textContent = record.name;
     $("#sidebar-class-code").textContent = record.code;
     $("#sidebar-class-code").setAttribute("aria-label", `Class code ${record.code}`);
@@ -1090,6 +1161,18 @@
     $("#roster-class-title").textContent = record.name;
     $("#roster-class-code").textContent = record.code;
     $("#active-class-select").innerHTML = state.classRecords.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === record.id ? "selected" : ""}>${escapeHtml(item.name)}</option>`).join("");
+    $("#teacher-recover-code").value = "";
+    $("#teacher-recover-class-code").value = "";
+    $("#teacher-recover-status").textContent = "Both codes reopen a class saved in this browser. Cross-device recovery needs shared storage.";
+    $("#lesson-history-count").textContent = `${state.classRecords.length} saved ${state.classRecords.length === 1 ? "class" : "classes"}`;
+    $("#lesson-history-list").innerHTML = state.classRecords.map((item) => {
+      const savedActivity = item.activity || {};
+      const trialCount = Array.isArray(savedActivity.history) ? savedActivity.history.length : 0;
+      const learnerCount = Array.isArray(item.students) ? item.students.length : 0;
+      const savedAt = Number(item.updatedAt || item.createdAt || 0);
+      const date = savedAt ? new Date(savedAt).toLocaleString() : "Saved in this browser";
+      return `<article class="lesson-history-item"><div><strong>${escapeHtml(item.lessonTitle || item.name)}</strong><span>${escapeHtml(item.name)} · code ${escapeHtml(item.code)}</span><small>${learnerCount} ${learnerCount === 1 ? "learner" : "learners"} · ${trialCount} saved ${trialCount === 1 ? "trial" : "trials"} · ${escapeHtml(date)}</small></div><button type="button" class="outline-button" data-recover-class="${escapeHtml(item.id)}" ${item.id === record.id ? "disabled" : ""}>${item.id === record.id ? "Active class" : "Use class code"}</button></article>`;
+    }).join("") || `<p class="history-empty">Saved class and lesson records will appear here.</p>`;
     const studentLink = studentJoinUrl();
     $("#student-join-link").href = studentLink.href;
     $("#student-url-display").textContent = studentLink.href;
@@ -1162,6 +1245,8 @@
     if (state.classRecords.some((record) => record.name.toLocaleLowerCase() === label.toLocaleLowerCase())) { showToast("A class with that name already exists."); return false; }
     const code = generateUniqueClassCode();
     const record = makeClass(label, code, []);
+    record.createdAt = Date.now();
+    record.updatedAt = record.createdAt;
     state.classRecords.push(record);
     state.activeClassId = record.id;
     state.currentStudentId = null;
@@ -1196,11 +1281,32 @@
     return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join("");
   }
 
+  function generateTeacherRecoveryCode() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(10);
+    if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+    else bytes.forEach((_, index) => { bytes[index] = Math.floor(Math.random() * 256); });
+    return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join("");
+  }
+
   function generateUniqueClassCode(exceptClassId = null, previousCode = "") {
     let code;
     do { code = generateClassCode(); }
     while (code === previousCode || state.classRecords.some((item) => item.id !== exceptClassId && item.code?.toUpperCase() === code));
     return code;
+  }
+
+  function recoverTeacherClass(codeValue, teacherCodeValue) {
+    const code = String(codeValue || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const teacherCode = String(teacherCodeValue || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const record = state.classRecords.find((item) => String(item.code || "").toUpperCase() === code && String(item.teacherCode || "").toUpperCase() === teacherCode);
+    if (!record) {
+      $("#teacher-recover-status").textContent = "The class and teacher codes did not match a saved class in this browser.";
+      return false;
+    }
+    activateClass(record.id);
+    $("#teacher-recover-status").textContent = `${record.name} is open. Its saved lesson details and learner records are restored.`;
+    return true;
   }
 
   function renameClass(id, name) {
@@ -1338,27 +1444,27 @@
         replay.series = data.series && typeof data.series === "object" ? structuredCloneSafe(data.series) : replay.series;
         replay.hasRun = true;
       }
-      if (event.type === "time_seeked") replay.hasRun = Number(data.elapsed) > 0;
+      if (data.series && typeof data.series === "object") {
+        replay.series = structuredCloneSafe(data.series);
+        replay.hasRun = replay.hasRun || Object.values(replay.series).some((series) => (series.points?.length || 0) > 1);
+      }
+      if (event.type === "time_seeked") replay.hasRun = Boolean(data.hasRun ?? (Number(data.elapsed) > 0));
       replay.elapsed = Number.isFinite(event.elapsed) ? event.elapsed : replay.elapsed;
     }
-    if (replay.hasRun && replay.elapsed > 0) {
-      const ids = [replay.selected, ...replay.comparison];
-      const amountAt = (material, seconds) => {
-        const amount = replay.compaction / 100;
-        const base = Math.max(.08, 1 - amount * .72);
-        const factor = Math.pow(base, material.sensitivity > .75 ? 2.15 : 1.15);
-        const rate = material.k * factor * AREA_M2 * ((replay.headCm / 100) / (replay.depthCm / 100)) * 1e6;
-        return rate * seconds;
-      };
-      ids.forEach((id) => {
-        const material = getMaterial(id);
-        const points = [];
-        for (let second = 0; second < replay.elapsed; second += Math.max(1, Math.ceil(replay.elapsed / 120))) points.push({ t: second, v: amountAt(material, second) });
-        points.push({ t: replay.elapsed, v: amountAt(material, replay.elapsed) });
-        replay.series[id] = { volume: amountAt(material, replay.elapsed), points };
-      });
-    }
-    replay.timeLimit = Math.max(120, Math.ceil(replay.elapsed / 300) * 300);
+    Object.values(replay.series).forEach((series) => {
+      const points = series.points || [];
+      if (!points.length || replay.elapsed <= points[0].t) { series.cursorVolume = 0; return; }
+      for (let pointIndex = 1; pointIndex < points.length; pointIndex += 1) {
+        if (replay.elapsed <= points[pointIndex].t) {
+          const previous = points[pointIndex - 1], next = points[pointIndex];
+          const span = next.t - previous.t;
+          series.cursorVolume = span > 0 ? previous.v + (next.v - previous.v) * ((replay.elapsed - previous.t) / span) : next.v;
+          return;
+        }
+      }
+      series.cursorVolume = points[points.length - 1].v;
+    });
+    replay.timeLimit = 120;
     return replay;
   }
 
@@ -1469,8 +1575,13 @@
     (attempt.materials || [attempt.selected]).forEach((id) => {
       const material = getMaterial(id);
       const series = attempt.series?.[id];
-      const porosity = Math.max(1, material.porosity - ((attempt.compaction || 0) / 100) * 18);
-      (series?.points || []).forEach((point) => rows.push([point.t, material.label, attempt.headCm, attempt.depthCm, attempt.compaction, point.v, porosity]));
+      (series?.points || []).forEach((point) => {
+        const event = [...(series.events || [])].reverse().find((item) => item.t <= point.t);
+        const settings = event?.settings || attempt;
+        const compaction = Number(settings.compaction) || 0;
+        const porosity = Math.max(1, material.porosity - (compaction / 100) * 18);
+        rows.push([point.t, material.label, settings.headCm, settings.depthCm, compaction, point.v, porosity]);
+      });
     });
     const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const csv = rows.map((row) => row.map(quote).join(",")).join("\r\n");
@@ -1607,12 +1718,18 @@
   function wireRange(selector, key, eventType, outputSelector, unit) {
     $(selector).addEventListener("input", (event) => {
       if (state.running) settleClock(performance.now());
+      if (state.hasRun && state.elapsed < recordedUntil() - 1e-6) {
+        event.target.value = String(state[key]);
+        showToast("Return to the latest recorded time before changing the trial settings.");
+        return;
+      }
       state[key] = Number(event.target.value);
+      if (state.hasRun) activeMaterialIds().forEach(addSimulationEvent);
       $(outputSelector).textContent = `${state[key]}${unit}`;
       renderAdvanced(); updateExperimentStatus(); renderChart(); renderMaterialsTable();
       clearTimeout(settleTimer);
       settleTimer = setTimeout(() => {
-        logEvent(eventType, { value: state[key] });
+        logEvent(eventType, { value: state[key], series: structuredCloneSafe(state.series) });
         persist();
       }, 320);
       touchActivity();
@@ -1699,6 +1816,26 @@
   $("#export-class").addEventListener("click", downloadCsv);
   $("#teacher-tour-start").addEventListener("click", () => showTeacherTour(0));
   $("#active-class-select").addEventListener("change", (event) => activateClass(event.target.value));
+  $("#teacher-recover-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const opened = recoverTeacherClass($("#teacher-recover-class-code").value, $("#teacher-recover-code").value);
+    if (opened) showToast("Saved class reopened. Lesson details and roster restored.");
+  });
+  $("#copy-teacher-recovery-code").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(activeClass()?.teacherCode || "");
+      $("#copy-teacher-recovery-code").textContent = "Copied";
+      setTimeout(() => { $("#copy-teacher-recovery-code").textContent = "Copy code"; }, 1800);
+    } catch { showToast("Select and copy the teacher recovery code above."); }
+  });
+  $("#lesson-history-list").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-recover-class]");
+    const record = state.classRecords.find((item) => item.id === button?.dataset.recoverClass);
+    if (!record) return;
+    $("#teacher-recover-class-code").value = record.code;
+    $("#teacher-recover-code").focus();
+    $("#teacher-recover-form").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
   $("#new-class").addEventListener("click", () => openDialog("Add a class", `<form id="new-class-form"><label class="field-label" for="new-class-name">Class name</label><input id="new-class-name" name="class-name" class="text-input" maxlength="80" required placeholder="e.g. Period 2 Science"/><div class="profile-actions"><button type="button" class="quiet-button" data-dialog-cancel>Cancel</button><button type="submit" class="small-primary">Create class</button></div></form>`));
   $("#rename-class").addEventListener("click", () => openDialog("Rename class", `<form id="rename-class-form"><label class="field-label" for="rename-class-name">Class name</label><input id="rename-class-name" name="class-name" class="text-input" maxlength="80" required value="${escapeHtml(activeClass()?.name || "")}"/><div class="profile-actions"><button type="button" class="quiet-button" data-dialog-cancel>Cancel</button><button type="submit" class="small-primary">Save name</button></div></form>`));
   $("#delete-class").addEventListener("click", () => {
@@ -1974,7 +2111,7 @@
   renderAll();
   renderTeacher();
   renderInitialSavedAnswers();
-  if (needsFirstClassCodeSave) persist();
+  if (needsFirstClassCodeSave || needsTeacherCodeSave) persist();
   if (state.view !== "explore") showView(state.view);
   updateReplayControls();
 })();
